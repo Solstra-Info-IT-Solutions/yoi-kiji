@@ -3,7 +3,7 @@ import { NextRequest,NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { sendOrderConfirmation } from "@/lib/notifications";
+import { sendOrderConfirmation,sendWhatsAppOrderConfirmation } from "@/lib/notifications";
 const schema=z.object({razorpay_order_id:z.string(),razorpay_payment_id:z.string(),razorpay_signature:z.string()});
 export async function POST(request:NextRequest){
  const user=await getCurrentUser();if(!user)return NextResponse.json({error:"Sign in required."},{status:401});
@@ -18,6 +18,6 @@ export async function POST(request:NextRequest){
   prisma.payment.update({where:{id:payment.id},data:{status:"CAPTURED",providerPaymentId:parsed.data.razorpay_payment_id}}),
   prisma.order.update({where:{id:payment.orderId},data:{status:"CONFIRMED"}})
  ]);
- await sendOrderConfirmation(payment.orderId);
+ await Promise.all([sendOrderConfirmation(payment.orderId),sendWhatsAppOrderConfirmation(payment.orderId)]);
  return NextResponse.json({verified:true,orderNumber:payment.order.orderNumber});
 }

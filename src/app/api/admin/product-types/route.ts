@@ -38,6 +38,14 @@ export async function POST(request: NextRequest) {
   const data = parsed.data;
   const duplicateKeys = data.attributes.map(a => a.key).filter((key, index, all) => all.indexOf(key) !== index);
   if (duplicateKeys.length) return NextResponse.json({ error: `Duplicate attribute keys: ${[...new Set(duplicateKeys)].join(", ")}` }, { status: 400 });
+  const invalidOptions = data.attributes.find(attribute =>
+    (attribute.type === "SELECT" || attribute.type === "MULTI_SELECT") && (!attribute.options || attribute.options.length === 0)
+  );
+  if (invalidOptions) return NextResponse.json({ error: `${invalidOptions.name} needs at least one allowed option.` }, { status: 400 });
+  const unsupportedAxis = data.attributes.find(attribute =>
+    attribute.variantAxis && !["TEXT", "NUMBER", "SELECT"].includes(attribute.type)
+  );
+  if (unsupportedAxis) return NextResponse.json({ error: `Variant axis ${unsupportedAxis.name} must use TEXT, NUMBER or SELECT.` }, { status: 400 });
   try {
     const productType = await prisma.$transaction(async tx => {
       const created = await tx.productType.create({ data: { name: data.name, slug: data.slug, description: data.description } });

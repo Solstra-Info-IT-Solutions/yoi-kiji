@@ -22,7 +22,7 @@ export async function POST(request:NextRequest){
  if(!shippingRaw||!/^\d+$/.test(shippingRaw))return fail("Delivery pricing is being configured. Checkout will open shortly.",503);
  const shippingPaise=Number(shippingRaw);if(!Number.isSafeInteger(shippingPaise))return fail("Delivery pricing is not configured correctly.",503);
  const shippingTaxRaw=process.env.SHIPPING_TAX_RATE_BPS;
- if(!shippingTaxRaw||!/^\\d+$/.test(shippingTaxRaw)||Number(shippingTaxRaw)>10000)return fail("Shipping tax treatment is awaiting seller confirmation.",503);
+ if(!shippingTaxRaw||!/^\d+$/.test(shippingTaxRaw)||Number(shippingTaxRaw)>10000)return fail("Shipping tax treatment is awaiting seller confirmation.",503);
  const shippingTaxRateBps=Number(shippingTaxRaw);
   if(process.env.SHIPPING_DEFAULT_PROVIDER==="ATS")return fail("Amazon Shipping integration is awaiting the seller's official API credentials.",503);
   if(process.env.SHIPPING_DEFAULT_PROVIDER==="DELHIVERY"){

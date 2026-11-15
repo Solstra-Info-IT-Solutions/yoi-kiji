@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getActiveProducts, storefrontCategories } from "@/lib/catalog";
 import { formatINR } from "@/lib/money";
 
+export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Shop the collections", description: "Explore the YOI KIJI home textile collections." };
 
 export default async function ShopPage() {

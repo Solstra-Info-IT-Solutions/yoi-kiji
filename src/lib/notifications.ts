@@ -25,3 +25,32 @@ export async function sendOrderConfirmation(orderId:string){
   return {sent:false,reason:"Email delivery failed."};
  }
 }
+
+export async function sendWhatsAppOrderConfirmation(orderId:string){
+ const accessToken=process.env.WHATSAPP_ACCESS_TOKEN;
+ const phoneNumberId=process.env.WHATSAPP_PHONE_NUMBER_ID;
+ const version=process.env.WHATSAPP_API_VERSION;
+ const templateName=process.env.WHATSAPP_ORDER_TEMPLATE_NAME;
+ if(!accessToken||!phoneNumberId||!version||!templateName)return {sent:false,reason:"WhatsApp provider is not configured."};
+ const order=await prisma.order.findUnique({where:{id:orderId},include:{user:true}});
+ if(!order||!order.user.whatsappOptIn)return {sent:false,reason:"Customer has not opted in to WhatsApp updates."};
+ const address=order.shippingAddress as Record<string,string>;
+ let phone=(address.phone??"").replace(/\\D/g,"");
+ if(address.countryCode==="IN"&&phone.length===10)phone="91"+phone;
+ if(phone.length<10)return {sent:false,reason:"Customer phone number is invalid."};
+ const event="ORDER_CONFIRMED";
+ const log=await prisma.notificationLog.upsert({where:{orderId_channel_event:{orderId,channel:"WHATSAPP",event}},create:{orderId,channel:"WHATSAPP",event,status:"PENDING"},update:{}});
+ if(log.status==="SENT"||log.status==="SENDING")return {sent:log.status==="SENT",reason:"Already processed."};
+ const claim=await prisma.notificationLog.updateMany({where:{id:log.id,status:{in:["PENDING","FAILED"]}},data:{status:"SENDING",error:null}});
+ if(claim.count!==1)return {sent:false,reason:"Notification is already being processed."};
+ try{
+  const response=await fetch("https://graph.facebook.com/"+version+"/"+phoneNumberId+"/messages",{method:"POST",headers:{Authorization:"Bearer "+accessToken,"Content-Type":"application/json"},body:JSON.stringify({messaging_product:"whatsapp",to:phone,type:"template",template:{name:templateName,language:{code:"en"},components:[{type:"body",parameters:[{type:"text",text:order.orderNumber},{type:"text",text:"INR "+(order.totalPaise/100).toFixed(2)}]}]}}),cache:"no-store"});
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok)throw new Error(typeof data.error?.message==="string"?data.error.message:"WhatsApp provider rejected the message.");
+  await prisma.notificationLog.update({where:{id:log.id},data:{status:"SENT",providerId:data.messages?.[0]?.id??null,error:null}});
+  return {sent:true};
+ }catch(error){
+  await prisma.notificationLog.update({where:{id:log.id},data:{status:"FAILED",error:error instanceof Error?error.message:"Delivery failed."}});
+  return {sent:false,reason:"WhatsApp delivery failed."};
+ }
+}

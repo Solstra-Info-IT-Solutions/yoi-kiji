@@ -4,6 +4,7 @@ import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { calculateTaxInclusive } from "@/lib/money";
+import { checkDelhiveryServiceability } from "@/lib/shipping/delhivery";
 
 const schema=z.object({
  items:z.array(z.object({productId:z.string().min(1),variantId:z.string().optional(),quantity:z.number().int().min(1).max(10)})).min(1).max(30),
@@ -19,6 +20,11 @@ export async function POST(request:NextRequest){
  const shippingRaw=process.env.SHIPPING_FLAT_RATE_PAISE;
  if(!shippingRaw||!/^\d+$/.test(shippingRaw))return fail("Delivery pricing is being configured. Checkout will open shortly.",503);
  const shippingPaise=Number(shippingRaw);if(!Number.isSafeInteger(shippingPaise))return fail("Delivery pricing is not configured correctly.",503);
+  if(process.env.SHIPPING_DEFAULT_PROVIDER==="ATS")return fail("Amazon Shipping integration is awaiting the seller's official API credentials.",503);
+  if(process.env.SHIPPING_DEFAULT_PROVIDER==="DELHIVERY"){
+   try{const service=await checkDelhiveryServiceability(parsed.data.shippingAddress.postalCode);if(!service.serviceable)return fail("Delhivery does not currently service this PIN code.",400);}
+   catch{return fail("We could not confirm delivery serviceability. Please try again later.",503);}
+  }
  const orderNumber=`YK-${randomUUID().replace(/-/g,"").slice(0,12).toUpperCase()}`;
  try{
   const products=await prisma.product.findMany({where:{id:{in:parsed.data.items.map(i=>i.productId)},isActive:true},include:{variants:{where:{isActive:true}}}});

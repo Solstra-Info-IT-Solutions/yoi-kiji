@@ -71,6 +71,7 @@ export async function POST(request: NextRequest) {
     const unknownIds = Object.keys(data.attributes).filter(id => !allowedIds.has(id));
     if (unknownIds.length) return NextResponse.json({ error: "One or more attributes do not belong to the selected product type." }, { status: 400 });
     for (const link of productType.attributes) {
+      if (link.attribute.isVariantAxis) continue;
       const value = data.attributes[link.attributeId];
       if (!hasValue(value)) {
         if (link.isRequired) return NextResponse.json({ error: `${link.attribute.name} is required.` }, { status: 400 });

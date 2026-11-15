@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 
 type Axis = { id: string; key: string; name: string; type: string; unit: string | null; options: unknown };
-type Variant = { id: string; sku: string; label: string; inventoryQty: number; pricePaise: number | null; isActive: boolean; attributes?: unknown };
+type Variant = { id: string; sku: string; label: string; inventoryQty: number; pricePaise: number | null; isActive: boolean; swatchHex?: string | null; attributes?: unknown };
 type MatrixRow = { sku: string; label: string; attributes: Record<string, string> };
 
 function slugPart(value: string) {
@@ -28,6 +28,7 @@ export function AdminVariantForm({ productId, productSku, axes = [], initialVari
   const [editLabel, setEditLabel] = useState("");
   const [editPrice, setEditPrice] = useState("");
   const [editStock, setEditStock] = useState("0");
+  const [editSwatch, setEditSwatch] = useState("");
   const [editAttributes, setEditAttributes] = useState<Record<string, string>>({});
 
   const matrixRows = useMemo<MatrixRow[]>(() => {
@@ -100,7 +101,7 @@ export function AdminVariantForm({ productId, productSku, axes = [], initialVari
       : {};
     setEditingId(variant.id); setEditSku(variant.sku); setEditLabel(variant.label);
     setEditPrice(variant.pricePaise == null ? "" : (variant.pricePaise / 100).toFixed(2));
-    setEditStock(String(variant.inventoryQty)); setEditAttributes(attrs);
+    setEditStock(String(variant.inventoryQty)); setEditSwatch(variant.swatchHex ?? ""); setEditAttributes(attrs);
   }
 
   async function saveEdit(variantId: string) {
@@ -108,7 +109,7 @@ export function AdminVariantForm({ productId, productSku, axes = [], initialVari
     try {
       const data = await requestJson(`/api/admin/products/${productId}/variants/${variantId}`, "PATCH", {
         sku: editSku, label: editLabel, pricePaise: editPrice ? Math.round(Number(editPrice) * 100) : null,
-        inventoryQty: Number(editStock), attributes: editAttributes,
+        inventoryQty: Number(editStock), swatchHex: editSwatch || null, attributes: editAttributes,
       });
       setVariants(old => old.map(variant => variant.id === variantId ? data.variant : variant));
       setEditingId(null); setMessage("Variant changes saved.");
@@ -136,10 +137,11 @@ export function AdminVariantForm({ productId, productSku, axes = [], initialVari
         {axes.map(axis => <label key={axis.id}>{axis.name}<input value={editAttributes[axis.key] ?? ""} onChange={event => setEditAttributes(old => ({ ...old, [axis.key]: event.target.value }))} /></label>)}
         <label>Price override (INR)<input type="number" min=".01" step=".01" value={editPrice} onChange={event => setEditPrice(event.target.value)} /></label>
         <label>Stock<input type="number" min="0" value={editStock} onChange={event => setEditStock(event.target.value)} /></label>
+        <label>Colour swatch<input type="color" value={editSwatch || "#e9e9e9"} onChange={event => setEditSwatch(event.target.value)} /></label>
         <button type="button" disabled={busy} onClick={() => void saveEdit(variant.id)}>Save SKU</button>
         <button type="button" disabled={busy} onClick={() => setEditingId(null)}>Cancel</button>
       </> : <>
-        <strong>{variant.label}</strong><span>{variant.sku}</span><span>{variant.inventoryQty} in stock</span><span>{variant.isActive ? "Active" : "Archived"}</span>
+        <strong>{variant.label}</strong>{variant.swatchHex && <span className="admin-variant-swatch" style={{ backgroundColor: variant.swatchHex }} aria-label={`Swatch ${variant.swatchHex}`} />}<span>{variant.sku}</span><span>{variant.inventoryQty} in stock</span><span>{variant.isActive ? "Active" : "Archived"}</span>
         <button type="button" disabled={busy || !variant.isActive} onClick={() => beginEdit(variant)}>Edit</button>
         <button type="button" disabled={busy || !variant.isActive} onClick={() => void archiveVariant(variant.id)}>Archive</button>
       </>}

@@ -58,7 +58,7 @@ export async function getActiveProducts(categorySlug?: string) {
         ] } : {}),
       },
       include: {
-        images: { orderBy: { position: "asc" }, take: 1 },
+        images: { where: { variantId: null }, orderBy: [{ isPrimary: "desc" }, { position: "asc" }], take: 1 },
         category: true,
         categoryLinks: { include: { category: true } },
         variants: { where: { isActive: true }, orderBy: { label: "asc" } },
@@ -77,10 +77,14 @@ export async function getActiveProductBySlug(slug: string) {
     return await prisma.product.findFirst({
       where: { slug, isActive: true },
       include: {
-        images: { orderBy: { position: "asc" } },
+        images: { where: { variantId: null }, orderBy: [{ isPrimary: "desc" }, { position: "asc" }] },
         category: true,
         categoryLinks: { include: { category: true } },
-        variants: { where: { isActive: true }, orderBy: { label: "asc" } },
+        variants: {
+          where: { isActive: true },
+          orderBy: { label: "asc" },
+          include: { images: { orderBy: [{ isPrimary: "desc" }, { position: "asc" }] } },
+        },
         attributeValues: { include: { attribute: true } },
         productType: true,
       },

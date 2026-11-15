@@ -158,3 +158,14 @@ The storefront reads active categories from the database. Parent category pages 
 - Variant matrix generation currently supports SELECT axes and is limited to 250 combinations per request. Generated SKUs use the parent SKU plus normalized option values; administrators must review the preview and resolve any collisions before creating.
 - Variants can be edited and archived. Archival sets `isActive=false`; it never deletes a SKU or its order history. Stock corrections are written to `InventoryMovement`.
 - Product and variant prices remain integer paise. No tax, textile, certification or performance values are inferred by the application.
+
+
+## 11. Product media and SKU imagery
+
+- Product images are stored as `ProductImage` records. A null `variantId` means the image belongs to the general product gallery; a non-null `variantId` scopes the image to that sellable SKU.
+- Each gallery scope (general product or individual SKU) may have one primary image. Deleting or moving a primary image promotes a remaining image in the old scope.
+- The storefront initially displays the general product gallery. Selecting a SKU places that SKU's images first and falls back to the general gallery when the SKU has no dedicated images.
+- `ProductVariant.swatchHex` stores an optional six-digit hex colour used to display a visual option swatch. It is merchandising metadata only; it does not infer or replace the textual colour/specification.
+- Admin uploads use a short-lived signed Cloudinary upload authorization. The API secret remains server-side; browser uploads are restricted to JPG, PNG, WebP and AVIF, with a 10 MB client-side limit. Existing HTTPS-hosted images can also be attached.
+- Configure `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY` and `CLOUDINARY_API_SECRET` in the deployment environment. Without these values, the upload-signature endpoint returns a configuration error; the existing hosted-URL workflow remains available.
+- Uploaded files are stored under `yoi-kiji/products/{productId}`. Removing an image record does not delete the corresponding Cloudinary asset; provider-side cleanup/retention is a separate operational task.

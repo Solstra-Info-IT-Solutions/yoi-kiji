@@ -9,6 +9,7 @@ const schema = z.object({
   pricePaise: z.number().int().positive().nullable().optional(),
   inventoryQty: z.number().int().min(0).optional(),
   isActive: z.boolean().optional(),
+  swatchHex: z.string().regex(/^#[0-9a-fA-F]{6}$/).nullable().optional(),
   attributes: z.record(z.string(), z.string()).optional(),
 }).strict();
 
@@ -65,6 +66,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
           ...(parsed.data.pricePaise !== undefined ? { pricePaise: parsed.data.pricePaise } : {}),
           ...(parsed.data.inventoryQty !== undefined ? { inventoryQty: parsed.data.inventoryQty } : {}),
           ...(parsed.data.isActive !== undefined ? { isActive: parsed.data.isActive } : {}),
+          ...(parsed.data.swatchHex !== undefined ? { swatchHex: parsed.data.swatchHex } : {}),
           ...(attributes !== undefined ? { attributes: attributes as never } : {}),
         },
       });

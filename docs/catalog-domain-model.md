@@ -134,3 +134,15 @@ GST rate and HSN must be confirmed SKU-by-SKU with the seller's tax adviser. Nev
 - Textiles Committee, draft regulation surfaced March 2026 (verify current status before reliance): https://textilescommittee.gov.in/wp-content/uploads/2026/03/Draft-regualtions.pdf
 - Industry construction reference for indicative home-textile parameters (not a standard or proof of any YOI KIJI product claim): https://akarta.in/textiles/home-textiles
 
+
+
+## 9. Starter catalogue setup
+
+After deploying the migrations and generating Prisma Client, run `npm run db:seed` to create the editable five-category starter tree and five product-type blueprints. The seed is idempotent and creates no sellable products, prices, stock, GST rates, or unverified textile claims.
+
+Admin entry points:
+- `/admin/categories` — create, edit, nest, reorder and activate/deactivate categories.
+- `/admin/product-types` — configure product families and reusable typed attributes.
+- `/admin/products` — create a product with the selected product type's dynamic fields.
+
+The storefront reads active categories from the database. Parent category pages include products assigned directly to that category and to its descendants. Product detail pages render the saved product-type attributes. Variant-axis metadata is recorded in the attribute blueprint; the full variant matrix/SKU generator remains a separate implementation milestone before using those axes for purchasable combinations.

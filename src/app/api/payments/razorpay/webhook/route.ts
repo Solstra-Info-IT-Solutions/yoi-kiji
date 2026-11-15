@@ -1,7 +1,7 @@
 import { createHmac,timingSafeEqual } from "node:crypto";
 import { NextRequest,NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { sendOrderConfirmation } from "@/lib/notifications";
+import { sendOrderConfirmation,sendWhatsAppOrderConfirmation } from "@/lib/notifications";
 export const runtime="nodejs";
 export async function POST(request:NextRequest){
  const secret=process.env.RAZORPAY_WEBHOOK_SECRET;if(!secret)return NextResponse.json({error:"Webhook is not configured."},{status:503});
@@ -36,7 +36,7 @@ export async function POST(request:NextRequest){
    await prisma.$transaction([prisma.payment.update({where:{id:payment.id},data:{status:processed?"REFUNDED":"CAPTURED",providerPaymentId:paymentId,webhookEventId:eventId??undefined,refundId:refundData.id,refundStatus:refundData.status,refundAmountPaise:refundData.amount}}),...(processed?[prisma.order.update({where:{id:payment.orderId},data:{status:"REFUNDED"}})]:[])]);
   }else{
    await prisma.$transaction([prisma.payment.update({where:{id:payment.id},data:{status:"CAPTURED",providerPaymentId:paymentId??undefined,webhookEventId:eventId??undefined}}),prisma.order.update({where:{id:payment.orderId},data:{status:"CONFIRMED"}})]);
-   await sendOrderConfirmation(payment.orderId);
+   await Promise.all([sendOrderConfirmation(payment.orderId),sendWhatsAppOrderConfirmation(payment.orderId)]);
   }
  }else if(event.event==="payment.failed"){
   // A failed attempt does not release reserved stock: the same Razorpay order may be retried.

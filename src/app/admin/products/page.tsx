@@ -52,8 +52,8 @@ export default async function AdminProducts() {
             categoryLinks: product.categoryLinks.map(link => ({ categoryId: link.categoryId, isPrimary: link.isPrimary })),
             attributeValues: product.attributeValues.map(value => ({ attributeId: value.attributeId, value: value.value })),
           }}/>
-          <AdminProductImages productId={product.id} initialImages={product.images}/>
-          <AdminVariantForm productId={product.id} productSku={product.sku} axes={axes} initialVariants={product.variants.map(v=>({id:v.id,sku:v.sku,label:v.label,inventoryQty:v.inventoryQty,pricePaise:v.pricePaise,isActive:v.isActive,attributes:v.attributes}))}/>
+          <AdminProductImages productId={product.id} initialImages={product.images} variants={product.variants.map(v=>({id:v.id,label:v.label,sku:v.sku}))}/>
+          <AdminVariantForm productId={product.id} productSku={product.sku} axes={axes} initialVariants={product.variants.map(v=>({id:v.id,sku:v.sku,label:v.label,inventoryQty:v.inventoryQty,pricePaise:v.pricePaise,isActive:v.isActive,swatchHex:v.swatchHex,attributes:v.attributes}))}/>
         </div>
       </article>;
     })}</div>

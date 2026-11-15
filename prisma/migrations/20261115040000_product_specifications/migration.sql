@@ -1,0 +1,7 @@
+ALTER TABLE "Product" ADD COLUMN "material" TEXT;
+ALTER TABLE "Product" ADD COLUMN "color" TEXT;
+ALTER TABLE "Product" ADD COLUMN "careInstructions" TEXT;
+ALTER TABLE "Product" ADD COLUMN "weightGrams" INTEGER;
+ALTER TABLE "Product" ADD COLUMN "lengthMm" INTEGER;
+ALTER TABLE "Product" ADD COLUMN "widthMm" INTEGER;
+ALTER TABLE "Product" ADD COLUMN "heightMm" INTEGER;

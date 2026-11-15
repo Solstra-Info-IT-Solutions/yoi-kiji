@@ -1,6 +1,9 @@
 "use client";
 import { FormEvent,useEffect,useState } from "react";
-type CategoryOption={id:string;name:string;slug:string;parentId:string|null};\nexport function AdminProductForm(){\n const [categories,setCategories]=useState<CategoryOption[]>([]);\n useEffect(()=>{fetch("/api/admin/categories").then(r=>r.ok?r.json():null).then(d=>{if(d?.categories)setCategories(d.categories.filter((c:CategoryOption & {isActive:boolean})=>c.isActive));}).catch(()=>{});},[]);
+type CategoryOption={id:string;name:string;slug:string;parentId:string|null;isActive:boolean};
+export function AdminProductForm(){
+ const [categories,setCategories]=useState<CategoryOption[]>([]);
+ useEffect(()=>{fetch("/api/admin/categories").then(r=>r.ok?r.json():null).then(d=>{if(d?.categories)setCategories(d.categories.filter((c:CategoryOption)=>c.isActive));}).catch(()=>{});},[]);
  const [open,setOpen]=useState(false);const [message,setMessage]=useState("");const [busy,setBusy]=useState(false);
  const [form,setForm]=useState({name:"",slug:"",description:"",sku:"",hsnCode:"",material:"",color:"",careInstructions:"",weightGrams:"",lengthMm:"",widthMm:"",heightMm:"",gstRate:"0",price:"",stock:"",categoryId:"",imageUrl:"",imageAlt:""});
  function set(k:keyof typeof form,v:string){setForm(old=>({...old,[k]:v}));}

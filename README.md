@@ -42,7 +42,7 @@ Delhivery shipment manifestation is not yet enabled. The client must supply its 
 - Delhivery server-side serviceability adapter
 - Zod request validation and Vitest unit tests
 
-## Local development
+## Verification\nGitHub Actions is configured to validate Prisma schema, TypeScript, unit tests and the production build on pull requests and pushes to main. Check the latest workflow result before deployment.\n\n## Local development
 1. Use Node.js 22+ and PostgreSQL.
 2. Copy .env.example to .env and generate a unique APP_SECRET (32+ characters).
 3. Install dependencies: npm install

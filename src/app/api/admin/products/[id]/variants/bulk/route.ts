@@ -29,6 +29,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const allowedKeys = new Set(axes.map(axis => axis.attribute.key));
   const seenLabels = new Set<string>();
   const seenSkus = new Set<string>();
+  const seenCombinations = new Set<string>();
   for (const variant of parsed.data.variants) {
     const keys = Object.keys(variant.attributes);
     if (keys.length !== allowedKeys.size || keys.some(key => !allowedKeys.has(key))) {
@@ -49,6 +50,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (seenLabels.has(normalizedLabel) || seenSkus.has(normalizedSku)) {
       return NextResponse.json({ error: "The matrix contains duplicate labels or SKUs." }, { status: 400 });
     }
+    const combinationKey = axes.map(axis => `${axis.attribute.key}=${variant.attributes[axis.attribute.key]}`).join("|");
+    if (seenCombinations.has(combinationKey)) {
+      return NextResponse.json({ error: "The matrix contains duplicate option combinations." }, { status: 400 });
+    }
+    seenCombinations.add(combinationKey);
     seenLabels.add(normalizedLabel);
     seenSkus.add(normalizedSku);
   }
@@ -57,8 +63,17 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const created = await prisma.$transaction(async tx => {
       const existing = await tx.productVariant.findMany({ where: { productId: id }, select: { label: true, attributes: true } });
       const existingLabels = new Set(existing.map(variant => variant.label.trim().toLowerCase()));
+      const keyFor = (attributes: unknown) => {
+        if (!attributes || typeof attributes !== "object" || Array.isArray(attributes)) return "";
+        const values = attributes as Record<string, unknown>;
+        return axes.map(axis => `${axis.attribute.key}=${String(values[axis.attribute.key] ?? "")}`).join("|");
+      };
+      const existingCombinations = new Set(existing.map(variant => keyFor(variant.attributes)));
       if (parsed.data.variants.some(variant => existingLabels.has(variant.label.trim().toLowerCase()))) {
         throw new Error("DUPLICATE_VARIANT_LABEL");
+      }
+      if (parsed.data.variants.some(variant => existingCombinations.has(keyFor(variant.attributes)))) {
+        throw new Error("DUPLICATE_VARIANT_COMBINATION");
       }
       await tx.productVariant.createMany({
         data: parsed.data.variants.map(variant => ({

@@ -1,0 +1,3 @@
+import Link from "next/link";
+import { CartCount } from "@/components/cart-count";
+export function SiteHeader(){return <header className="site-header"><Link className="wordmark" href="/" aria-label="YOI KIJI home"><span className="wordmark-main">YOI KIJI</span><span className="wordmark-sub">THE ART OF TEXTILE LIVING</span></Link><nav aria-label="Main navigation"><Link href="/shop">Shop all</Link><Link href="/shop/bedsheets">Bedsheets</Link><Link href="/shop/curtains">Curtains</Link><Link href="/our-story">Our story</Link></nav><div className="header-actions"><Link href="/search" aria-label="Search">Search</Link><Link href="/account">Account</Link><Link className="bag-link" href="/cart">Bag <CartCount/></Link></div></header>}

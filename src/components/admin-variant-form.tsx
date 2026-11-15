@@ -34,7 +34,7 @@ export function AdminVariantForm({ productId, axes = [], initialVariants = [] }:
     {open&&<form onSubmit={submit}>
       {axes.length?axes.map(axis=>{
         const options=Array.isArray(axis.options)?axis.options.filter((v):v is string=>typeof v==="string"):[];
-        return <label key={axis.id}>{axis.name}{axis.unit? ` (${axis.unit})`:""}<select required value={values[axis.key]??""} onChange={e=>update(axis.key,e.target.value)}><option value="">Choose…</option>{options.map(option=><option key={option}>{option}</option>)}</select></label>;
+        return <label key={axis.id}>{axis.name}{axis.unit? ` (${axis.unit})`:""}{axis.type==="SELECT"?<select required value={values[axis.key]??""} onChange={e=>update(axis.key,e.target.value)}><option value="">Choose…</option>{options.map(option=><option key={option}>{option}</option>)}</select>:<input required type={axis.type==="NUMBER"?"number":"text"} step={axis.type==="NUMBER"?"any":undefined} value={values[axis.key]??""} onChange={e=>update(axis.key,e.target.value)}/>}</label>;
       }):<label>Variant option label<input required value={manualLabel} onChange={e=>setManualLabel(e.target.value)} placeholder="e.g. Single / Sage" /></label>}
       <input required placeholder="Variant SKU" value={sku} onChange={e=>setSku(e.target.value)}/>
       <input placeholder="Price override (INR)" type="number" min="0" step=".01" value={price} onChange={e=>setPrice(e.target.value)}/>

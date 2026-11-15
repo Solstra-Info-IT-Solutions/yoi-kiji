@@ -112,3 +112,13 @@
 .admin-product-edit{margin:.8rem 0}
 .admin-product-edit>.primary-link{margin:.35rem 0}
 @media(max-width:640px){.catalogue-toolbar{align-items:flex-start;flex-direction:column}.catalogue-sort{width:100%;justify-content:space-between}.catalogue-sort label{flex:1}.catalogue-sort select{max-width:65%}.catalogue-filters{padding:1rem}.catalogue-filter-heading{align-items:flex-start}}
+
+.admin-variant-item{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.6rem;align-items:end;padding:.8rem 0;border-bottom:1px solid rgba(14,48,14,.14)}
+.admin-variant-item label,.admin-variant-matrix label{display:grid;gap:.35rem;font-size:.78rem}
+.admin-variant-item input,.admin-variant-matrix input{min-width:0;width:100%;padding:.55rem;border:1px solid rgba(14,48,14,.25);background:transparent;color:inherit;font:inherit}
+.admin-variant-item button,.admin-variant-actions button,.admin-variant-matrix button{border:1px solid #0e300e;background:transparent;color:inherit;padding:.55rem .8rem;font:inherit;cursor:pointer}
+.admin-variant-matrix{margin:1rem 0;padding:1rem;border:1px solid rgba(14,48,14,.2);background:rgba(233,233,233,.35)}
+.admin-variant-matrix-preview{max-height:260px;overflow:auto;margin:.8rem 0;border-top:1px solid rgba(14,48,14,.18)}
+.admin-variant-matrix-preview>div{display:flex;justify-content:space-between;gap:1rem;padding:.55rem 0;border-bottom:1px solid rgba(14,48,14,.12);font-size:.78rem}
+.admin-variant-matrix-preview code{overflow-wrap:anywhere;font-size:.72rem}
+.admin-variant-matrix>label{max-width:320px;margin:.75rem 0}

@@ -81,6 +81,13 @@ model Product {
   description     String           @db.Text
   sku             String           @unique
   hsnCode         String?
+  material        String?
+  color           String?
+  careInstructions String?          @db.Text
+  weightGrams     Int?
+  lengthMm        Int?
+  widthMm         Int?
+  heightMm        Int?
   pricePaise      Int
   compareAtPaise  Int?
   currency        String           @default("INR")

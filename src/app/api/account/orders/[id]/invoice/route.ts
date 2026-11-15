@@ -19,7 +19,7 @@ export async function GET(_request:NextRequest,{params}:{params:Promise<{id:stri
   doc.moveDown();doc.font("Helvetica-Bold").text("ITEMS");
   doc.moveDown(.5);
   for(const item of order.items){doc.font("Helvetica-Bold").fontSize(10).text(item.productName+(item.variantLabel?" — "+item.variantLabel:""));doc.font("Helvetica").fontSize(8).fillColor("#555555").text("SKU: "+item.sku+"   HSN: "+(item.hsnCode??"—")+"   Qty: "+item.quantity);doc.text(formatINR(item.unitPricePaise)+" each     "+formatINR(item.unitPricePaise*item.quantity));doc.moveDown(.7);doc.fillColor("#333333");}
-  doc.moveDown();doc.font("Helvetica").fontSize(9).text("Items subtotal: "+formatINR(order.subtotalPaise),{align:"right"}).text("GST included (estimated): "+formatINR(order.taxPaise),{align:"right"}).text("Shipping: "+formatINR(order.shippingPaise),{align:"right"});
+  doc.moveDown();doc.font("Helvetica").fontSize(9).text("Items subtotal: "+formatINR(order.subtotalPaise),{align:"right"}).text("GST included in product and delivery amounts (estimated): "+formatINR(order.taxPaise),{align:"right"}).text("Shipping: "+formatINR(order.shippingPaise),{align:"right"});
   doc.moveDown(.5).font("Helvetica-Bold").fontSize(13).fillColor("#0e300e").text("Order total: "+formatINR(order.totalPaise),{align:"right"});
   doc.moveDown(2).font("Helvetica").fontSize(8).fillColor("#777777").text("This document is an order summary, not a statutory GST tax invoice. The seller's legal, GST and invoice particulars must be confirmed before issuing a tax invoice.",{align:"left"});
   doc.end();

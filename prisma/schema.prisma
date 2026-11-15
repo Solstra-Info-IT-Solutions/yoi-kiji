@@ -83,7 +83,7 @@ model Product {
   pricePaise      Int
   compareAtPaise  Int?
   currency        String           @default("INR")
-  gstRateBps      Int              @default(1800)
+  gstRateBps      Int              @default(0)
   inventoryQty    Int              @default(0)
   isActive        Boolean          @default(false)
   hasVariants     Boolean          @default(false)

@@ -11,7 +11,7 @@ export async function POST(request:NextRequest){
  for(const order of expired){
   await prisma.$transaction(async tx=>{
    const current=await tx.order.findUnique({where:{id:order.id},include:{payment:true,items:true}});
-   if(!current||current.status!=="PENDING"||!current.reservationExpiresAt||current.reservationExpiresAt>new Date()||current.payment?.status==="CAPTURED")return;
+   if(!current||current.status!=="PENDING"||!current.reservationExpiresAt||current.reservationExpiresAt.getTime()>Date.now()||current.payment?.status==="CAPTURED")return;
    for(const item of current.items){
     if(item.variantId)await tx.productVariant.update({where:{id:item.variantId},data:{inventoryQty:{increment:item.quantity}}});
     else await tx.product.update({where:{id:item.productId},data:{inventoryQty:{increment:item.quantity}}});

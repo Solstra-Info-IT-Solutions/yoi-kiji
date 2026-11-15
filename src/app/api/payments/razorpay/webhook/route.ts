@@ -12,15 +12,13 @@ export async function POST(request:NextRequest){
  if(!gatewayOrderId)return NextResponse.json({received:true});
  const payment=await prisma.payment.findUnique({where:{providerOrderId:gatewayOrderId},include:{order:{include:{items:true}}}});
  if(!payment)return NextResponse.json({received:true});
- if((eventId&&payment.webhookEventId===eventId)||payment.status==="CAPTURED"||payment.status==="FAILED")return NextResponse.json({received:true,duplicate:true});
+ if((eventId&&payment.webhookEventId===eventId)||payment.status==="CAPTURED")return NextResponse.json({received:true,duplicate:true});
  if(event.event==="payment.captured"||event.event==="order.paid"){
   await prisma.$transaction([prisma.payment.update({where:{id:payment.id},data:{status:"CAPTURED",providerPaymentId:paymentId??undefined,webhookEventId:eventId??undefined}}),prisma.order.update({where:{id:payment.orderId},data:{status:"CONFIRMED"}})]);
  }else if(event.event==="payment.failed"){
-  await prisma.$transaction(async tx=>{
-   for(const item of payment.order.items){if(item.variantId)await tx.productVariant.update({where:{id:item.variantId},data:{inventoryQty:{increment:item.quantity}}});else await tx.product.update({where:{id:item.productId},data:{inventoryQty:{increment:item.quantity}}});}
-   await tx.payment.update({where:{id:payment.id},data:{status:"FAILED",providerPaymentId:paymentId??undefined,webhookEventId:eventId??undefined}});
-   await tx.order.update({where:{id:payment.orderId},data:{status:"CANCELLED"}});
-  });
+  // A failed attempt does not release reserved stock: the same Razorpay order may be retried.
+  await prisma.payment.update({where:{id:payment.id},data:{status:"FAILED",providerPaymentId:paymentId??undefined,webhookEventId:eventId??undefined}});
+
  }
  return NextResponse.json({received:true});
 }

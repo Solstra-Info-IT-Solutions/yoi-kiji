@@ -1,0 +1,7 @@
+import { NextRequest,NextResponse } from "next/server";
+import { z } from "zod";
+import { requireAdmin } from "@/lib/admin";
+import { prisma } from "@/lib/prisma";
+const schema=z.object({name:z.string().min(2).max(160).optional(),description:z.string().min(10).max(10000).optional(),pricePaise:z.number().int().positive().optional(),inventoryQty:z.number().int().min(0).optional(),isActive:z.boolean().optional(),gstRateBps:z.number().int().min(0).max(10000).optional()});
+export async function PATCH(request:NextRequest,{params}:{params:Promise<{id:string}>}){const admin=await requireAdmin();if(!admin||admin.role!=="ADMIN")return NextResponse.json({error:"Administrator permission required."},{status:403});const {id}=await params;const parsed=schema.safeParse(await request.json().catch(()=>null));if(!parsed.success)return NextResponse.json({error:"Invalid product update."},{status:400});try{const product=await prisma.product.update({where:{id},data:parsed.data});return NextResponse.json({product});}catch{return NextResponse.json({error:"Product not found."},{status:404});}}
+export async function DELETE(_request:NextRequest,{params}:{params:Promise<{id:string}>}){const admin=await requireAdmin();if(!admin||admin.role!=="ADMIN")return NextResponse.json({error:"Administrator permission required."},{status:403});const {id}=await params;try{const product=await prisma.product.update({where:{id},data:{isActive:false}});return NextResponse.json({product});}catch{return NextResponse.json({error:"Product not found."},{status:404});}}

@@ -44,6 +44,16 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   }
   try {
     const variant = await prisma.$transaction(async tx => {
+      if (axes.length) {
+        const existing = await tx.productVariant.findMany({ where: { productId: id }, select: { attributes: true } });
+        const keyFor = (attributes: unknown) => {
+          if (!attributes || typeof attributes !== "object" || Array.isArray(attributes)) return "";
+          const values = attributes as Record<string, unknown>;
+          return axes.map(axis => `${axis.attribute.key}=${String(values[axis.attribute.key] ?? "")}`).join("|");
+        };
+        const requestedKey = keyFor(data.attributes);
+        if (existing.some(variant => keyFor(variant.attributes) === requestedKey)) throw new Error("DUPLICATE_VARIANT_COMBINATION");
+      }
       const created = await tx.productVariant.create({ data: { ...data, productId: id, attributes: data.attributes } });
       await tx.product.update({ where: { id }, data: { hasVariants: true } });
       if (data.inventoryQty > 0) await tx.inventoryMovement.create({

@@ -77,7 +77,7 @@ export async function getActiveProductBySlug(slug: string) {
     return await prisma.product.findFirst({
       where: { slug, isActive: true },
       include: {
-        images: { orderBy: { position: "asc" } },
+        images: { where: { variantId: null }, orderBy: [{ isPrimary: "desc" }, { position: "asc" }] },
         category: true,
         categoryLinks: { include: { category: true } },
         variants: {

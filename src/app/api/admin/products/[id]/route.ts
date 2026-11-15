@@ -23,7 +23,7 @@ const schema = z.object({
   isActive: z.boolean().optional(),
   hasVariants: z.boolean().optional(),
   productTypeId: z.string().min(1).nullable().optional(),
-  categoryIds: z.array(z.string().min(1)).min(1).max(50).optional(),
+  categoryIds: z.array(z.string().min(1)).min(1).max(50).refine(ids => new Set(ids).size === ids.length, "Category assignments must be unique.").optional(),
   primaryCategoryId: z.string().min(1).optional(),
   attributes: z.record(z.string(), z.unknown()).optional(),
 }).strict();

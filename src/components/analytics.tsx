@@ -1,0 +1,4 @@
+"use client";
+import Script from "next/script";
+import { useEffect,useState } from "react";
+export function Analytics(){const [consent,setConsent]=useState(false);const id=process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;useEffect(()=>{const check=()=>setConsent(localStorage.getItem("yoikiji_analytics_consent")==="accepted");check();window.addEventListener("yoikiji-consent-updated",check);return()=>window.removeEventListener("yoikiji-consent-updated",check)},[]);if(!id||!consent)return null;return <><Script src={"https://www.googletagmanager.com/gtag/js?id="+id} strategy="afterInteractive"/><Script id="yoikiji-ga4" strategy="afterInteractive">{ "window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} window.gtag = gtag; gtag('js', new Date()); gtag('config', '"+id+"', { anonymize_ip: true });" }</Script></>}

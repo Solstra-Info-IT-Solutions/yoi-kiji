@@ -4,7 +4,7 @@
 The codebase includes a server-side PIN serviceability adapter. It calls the Delhivery Express API using a private account token and a configured base URL. The official integration documentation describes separate staging and production hosts, Token authentication, a mandatory serviceability check before shipment creation, and account-specific registered pickup warehouses.
 
 Documentation:
-- https://delhivery-express-api.readme.io/reference/1-pincode-servicability-api
+- https://delhivery-express-api-doc.readme.io/reference/1-pincode-servicability-api
 - https://delhivery-express-api.readme.io/reference/7-steps-of-integration
 - https://delhivery-express-api.readme.io/reference/order-creation-api
 

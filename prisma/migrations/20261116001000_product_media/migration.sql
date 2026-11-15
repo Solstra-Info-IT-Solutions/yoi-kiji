@@ -27,3 +27,8 @@ UPDATE "ProductImage" AS image
 SET "isPrimary" = true
 FROM ranked
 WHERE ranked."id" = image."id" AND ranked.rank = 1;
+
+-- Enforce one primary image for each general-product or SKU gallery, including concurrent writes.
+CREATE UNIQUE INDEX "ProductImage_single_primary_per_gallery_idx"
+ON "ProductImage" ("productId", COALESCE("variantId", ''))
+WHERE "isPrimary" = true;

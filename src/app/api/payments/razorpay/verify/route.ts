@@ -14,6 +14,13 @@ export async function POST(request:NextRequest){
  if(a.length!==b.length||!timingSafeEqual(a,b))return NextResponse.json({error:"Payment signature could not be verified."},{status:400});
  const payment=await prisma.payment.findUnique({where:{providerOrderId:parsed.data.razorpay_order_id},include:{order:true}});
  if(!payment||payment.order.userId!==user.id)return NextResponse.json({error:"Order not found."},{status:404});
+ const keyId=process.env.RAZORPAY_KEY_ID;if(!keyId)return NextResponse.json({error:"Payment verification is unavailable."},{status:503});
+ const auth=Buffer.from(keyId+":"+secret).toString("base64");
+ const providerResponse=await fetch("https://api.razorpay.com/v1/payments/"+parsed.data.razorpay_payment_id,{headers:{Authorization:"Basic "+auth},cache:"no-store"});
+ if(!providerResponse.ok)return NextResponse.json({error:"Payment status could not be confirmed with Razorpay."},{status:502});
+ const providerPayment=await providerResponse.json();
+ if(providerPayment.order_id!==parsed.data.razorpay_order_id||providerPayment.amount!==payment.amountPaise||providerPayment.currency!==payment.currency)return NextResponse.json({error:"Payment details do not match this order."},{status:400});
+ if(providerPayment.status!=="captured")return NextResponse.json({verified:false,pendingCapture:true,message:"Payment is authorised and awaiting capture confirmation."},{status:202});
  if(payment.status==="REFUNDED")return NextResponse.json({error:"This payment has already been refunded."},{status:409});
  if(payment.order.status==="CANCELLED"){
   const keyId=process.env.RAZORPAY_KEY_ID,apiSecret=process.env.RAZORPAY_KEY_SECRET;

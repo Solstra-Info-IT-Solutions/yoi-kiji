@@ -21,17 +21,32 @@ const schema = z.object({
   gstRateBps: z.number().int().min(0).max(10000).default(0),
   inventoryQty: z.number().int().min(0),
   categoryId: z.string().min(1),
+  productTypeId: z.string().optional(),
+  attributes: z.record(z.string(), z.unknown()).default({}),
   isActive: z.boolean().default(false),
   hasVariants: z.boolean().default(false),
   imageUrl: z.string().url().optional(),
   imageAlt: z.string().max(200).optional(),
 });
 
+function hasValue(value: unknown) {
+  return value !== undefined && value !== null && value !== "" && !(Array.isArray(value) && value.length === 0);
+}
+function validAttributeValue(type: string, value: unknown, options: unknown): boolean {
+  if (type === "TEXT") return typeof value === "string";
+  if (type === "NUMBER") return typeof value === "number" && Number.isFinite(value);
+  if (type === "BOOLEAN") return typeof value === "boolean";
+  if (type === "DATE") return typeof value === "string" && !Number.isNaN(Date.parse(value));
+  if (type === "SELECT") return typeof value === "string" && Array.isArray(options) && options.includes(value);
+  if (type === "MULTI_SELECT") return Array.isArray(value) && value.every(v => typeof v === "string" && Array.isArray(options) && options.includes(v));
+  return false;
+}
+
 export async function GET() {
   const admin = await requireAdmin();
   if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const products = await prisma.product.findMany({
-    include: { category: true, categoryLinks: { include: { category: true } }, images: true, variants: true, productType: true },
+    include: { category: true, categoryLinks: { include: { category: true } }, images: true, variants: true, productType: true, attributeValues: { include: { attribute: true } } },
     orderBy: { updatedAt: "desc" },
     take: 200,
   });
@@ -47,6 +62,29 @@ export async function POST(request: NextRequest) {
   const data = parsed.data;
   const category = await prisma.category.findUnique({ where: { id: data.categoryId }, select: { id: true, isActive: true } });
   if (!category || !category.isActive) return NextResponse.json({ error: "Choose an existing active category." }, { status: 400 });
+
+  let attributeValues: { attributeId: string; value: unknown }[] = [];
+  if (data.productTypeId) {
+    const productType = await prisma.productType.findUnique({ where: { id: data.productTypeId }, include: { attributes: { include: { attribute: true } } } });
+    if (!productType) return NextResponse.json({ error: "Selected product type does not exist." }, { status: 400 });
+    const allowedIds = new Set(productType.attributes.map(link => link.attributeId));
+    const unknownIds = Object.keys(data.attributes).filter(id => !allowedIds.has(id));
+    if (unknownIds.length) return NextResponse.json({ error: "One or more attributes do not belong to the selected product type." }, { status: 400 });
+    for (const link of productType.attributes) {
+      const value = data.attributes[link.attributeId];
+      if (!hasValue(value)) {
+        if (link.isRequired) return NextResponse.json({ error: `${link.attribute.name} is required.` }, { status: 400 });
+        continue;
+      }
+      if (!validAttributeValue(link.attribute.type, value, link.attribute.options)) {
+        return NextResponse.json({ error: `Invalid value for ${link.attribute.name}.` }, { status: 400 });
+      }
+      attributeValues.push({ attributeId: link.attributeId, value });
+    }
+  } else if (Object.keys(data.attributes).length) {
+    return NextResponse.json({ error: "Choose a product type before adding dynamic specifications." }, { status: 400 });
+  }
+
   try {
     const product = await prisma.$transaction(async tx => {
       const created = await tx.product.create({
@@ -57,8 +95,9 @@ export async function POST(request: NextRequest) {
           lengthMm: data.lengthMm, widthMm: data.widthMm, heightMm: data.heightMm,
           pricePaise: data.pricePaise, compareAtPaise: data.compareAtPaise,
           gstRateBps: data.gstRateBps, inventoryQty: data.inventoryQty,
-          categoryId: category.id, isActive: data.isActive, hasVariants: data.hasVariants,
+          categoryId: category.id, productTypeId: data.productTypeId, isActive: data.isActive, hasVariants: data.hasVariants,
           categoryLinks: { create: { categoryId: category.id, isPrimary: true } },
+          attributeValues: attributeValues.length ? { create: attributeValues.map(item => ({ attributeId: item.attributeId, value: item.value as never })) } : undefined,
           images: data.imageUrl ? { create: { url: data.imageUrl, alt: data.imageAlt ?? data.name } } : undefined,
         },
       });

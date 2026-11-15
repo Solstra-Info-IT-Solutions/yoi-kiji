@@ -71,6 +71,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         }
         attributeValues = [];
         for (const link of productType.attributes) {
+          if (link.attribute.isVariantAxis) continue;
           const value = submitted[link.attributeId];
           if (!hasValue(value)) {
             if (link.isRequired) return NextResponse.json({ error: `${link.attribute.name} is required.` }, { status: 400 });

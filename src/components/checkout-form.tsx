@@ -20,7 +20,7 @@ export function CheckoutForm(){
    if(!window.Razorpay)throw new Error("Payment window is still loading. Please try again.");
    const payment=new window.Razorpay({key:data.keyId,amount:data.amount,currency:data.currency,name:"YOI KIJI",description:"Order "+data.orderNumber,order_id:data.razorpayOrderId,prefill:{name:form.fullName,contact:form.phone},theme:{color:"#0e300e"},handler:async(result:Record<string,string>)=>{
     const verified=await fetch("/api/payments/razorpay/verify",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(result)});
-    const resultData=await verified.json();if(!verified.ok){setError(resultData.error??"Payment verification pending. Please contact support.");return;}
+    const resultData=await verified.json();if(!verified.ok||resultData.verified!==true){setError(resultData.error??resultData.message??"Payment is awaiting capture confirmation. Check your order history shortly.");return;}
     localStorage.removeItem("yoikiji_cart");localStorage.removeItem("yoikiji_checkout_key");router.push("/account/orders?placed="+encodeURIComponent(resultData.orderNumber));router.refresh();
    }});
    payment.open();

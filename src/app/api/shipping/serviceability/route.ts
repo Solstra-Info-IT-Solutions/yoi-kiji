@@ -1,0 +1,5 @@
+import { NextRequest,NextResponse } from "next/server";
+import { z } from "zod";
+import { checkDelhiveryServiceability } from "@/lib/shipping/delhivery";
+const schema=z.object({postalCode:z.string().regex(/^\d{6}$/)});
+export async function POST(request:NextRequest){const parsed=schema.safeParse(await request.json().catch(()=>null));if(!parsed.success)return NextResponse.json({error:"Enter a valid 6-digit PIN code."},{status:400});if(process.env.SHIPPING_DEFAULT_PROVIDER==="ATS")return NextResponse.json({error:"Amazon Shipping serviceability is awaiting the client's account API credentials."},{status:503});if(process.env.SHIPPING_DEFAULT_PROVIDER!=="DELHIVERY")return NextResponse.json({error:"Live courier serviceability is not configured."},{status:503});try{const result=await checkDelhiveryServiceability(parsed.data.postalCode);return NextResponse.json({serviceable:result.serviceable,prepaid:result.prepaid,cod:result.cod});}catch(e){return NextResponse.json({error:e instanceof Error?e.message:"Unable to check delivery availability."},{status:503});}}

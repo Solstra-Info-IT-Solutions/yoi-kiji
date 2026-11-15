@@ -7,5 +7,35 @@ import { AdminProductForm } from "@/components/admin-product-form";
 import { AdminProductRow } from "@/components/admin-product-row";
 import { AdminVariantForm } from "@/components/admin-variant-form";
 import { AdminProductImages } from "@/components/admin-product-images";
-export const dynamic="force-dynamic";
-export default async function AdminProducts(){const admin=await requireAdmin();if(!admin)redirect("/login");const products=await prisma.product.findMany({include:{category:true,images:true},orderBy:{updatedAt:"desc"},take:200});return <main className="commerce-page"><div className="commerce-breadcrumb"><Link href="/admin">Admin</Link><span>/</span> Products</div><header className="commerce-heading"><p className="eyebrow">CATALOGUE MANAGEMENT</p><h1>Products,<br/><em>beautifully presented.</em></h1><p>Review product visibility, pricing and inventory.</p></header><AdminProductForm/><div className="admin-product-list">{products.map(p=><article key={p.id}><div><h2>{p.name}</h2><p>{p.sku} · {p.category?.name??"Uncategorised"}</p></div><div><strong>{formatINR(p.pricePaise)}</strong><p>{p.inventoryQty} in stock</p></div><div><span className={p.isActive?"active-state":"inactive-state"}>{p.isActive?"Published":"Draft"}</span><AdminProductRow id={p.id} initiallyActive={p.isActive} initialStock={p.inventoryQty}/><AdminProductImages productId={p.id} initialImages={p.images}/>{p.category?.slug==="bedsheets"&&<AdminVariantForm productId={p.id}/>}</div></article>)}</div></main>}
+
+export const dynamic = "force-dynamic";
+export default async function AdminProducts() {
+  const admin = await requireAdmin();
+  if (!admin) redirect("/login");
+  const products = await prisma.product.findMany({
+    include: {
+      category: true,
+      images: true,
+      variants: { orderBy: { createdAt: "asc" } },
+      productType: { include: { attributes: { include: { attribute: true }, orderBy: { sortOrder: "asc" } } } },
+    },
+    orderBy: { updatedAt: "desc" },
+    take: 200,
+  });
+  return <main className="commerce-page">
+    <div className="commerce-breadcrumb"><Link href="/admin">Admin</Link><span>/</span> Products</div>
+    <header className="commerce-heading"><p className="eyebrow">CATALOGUE MANAGEMENT</p><h1>Products,<br/><em>beautifully presented.</em></h1><p>Review product visibility, pricing and inventory.</p></header>
+    <AdminProductForm />
+    <div className="admin-product-list">{products.map(product => {
+      const axes = product.productType?.attributes.filter(link => link.attribute.isVariantAxis).map(link => ({
+        id: link.attribute.id, key: link.attribute.key, name: link.attribute.name,
+        type: link.attribute.type, unit: link.attribute.unit, options: link.attribute.options,
+      })) ?? [];
+      return <article key={product.id}>
+        <div><h2>{product.name}</h2><p>{product.sku} · {product.category?.name ?? "Uncategorised"}{product.productType ? ` · ${product.productType.name}` : ""}</p></div>
+        <div><strong>{formatINR(product.pricePaise)}</strong><p>{product.inventoryQty} in stock · {product.variants.length} SKU variant(s)</p></div>
+        <div><span className={product.isActive ? "active-state" : "inactive-state"}>{product.isActive ? "Published" : "Draft"}</span><AdminProductRow id={product.id} initiallyActive={product.isActive} initialStock={product.inventoryQty}/><AdminProductImages productId={product.id} initialImages={product.images}/><AdminVariantForm productId={product.id} axes={axes} initialVariants={product.variants.map(v=>({id:v.id,sku:v.sku,label:v.label,inventoryQty:v.inventoryQty,pricePaise:v.pricePaise,isActive:v.isActive}))}/></div>
+      </article>;
+    })}</div>
+  </main>;
+}

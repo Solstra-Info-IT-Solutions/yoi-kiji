@@ -8,22 +8,64 @@ export const storefrontCategories = [
   { name: "Kitchen Linen", slug: "kitchen-linen", description: "Useful details for the heart of the home." },
 ] as const;
 
+export async function getActiveCategories() {
+  try {
+    return await prisma.category.findMany({
+      where: { isActive: true },
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+      select: { id: true, name: true, slug: true, description: true, imageUrl: true, parentId: true, showInMenu: true, seoTitle: true, seoDescription: true, sortOrder: true },
+    });
+  } catch {
+    return [];
+  }
+}
+
+export async function getActiveCategoryBySlug(slug: string) {
+  const categories = await getActiveCategories();
+  return categories.find(category => category.slug === slug) ?? null;
+}
+
+export async function getCategoryBranchIds(categoryId: string) {
+  const categories = await getActiveCategories();
+  const ids = new Set<string>([categoryId]);
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const category of categories) {
+      if (category.parentId && ids.has(category.parentId) && !ids.has(category.id)) {
+        ids.add(category.id);
+        changed = true;
+      }
+    }
+  }
+  return [...ids];
+}
+
 export async function getActiveProducts(categorySlug?: string) {
   try {
+    let categoryIds: string[] | undefined;
+    if (categorySlug) {
+      const category = await prisma.category.findUnique({ where: { slug: categorySlug }, select: { id: true, isActive: true } });
+      if (!category?.isActive) return [];
+      categoryIds = await getCategoryBranchIds(category.id);
+    }
     return await prisma.product.findMany({
       where: {
         isActive: true,
-        ...(categorySlug ? { category: { slug: categorySlug } } : {}),
+        ...(categoryIds ? { OR: [
+          { categoryId: { in: categoryIds } },
+          { categoryLinks: { some: { categoryId: { in: categoryIds } } } },
+        ] } : {}),
       },
       include: {
         images: { orderBy: { position: "asc" }, take: 1 },
         category: true,
+        categoryLinks: { include: { category: true } },
         variants: { where: { isActive: true }, orderBy: { label: "asc" } },
       },
       orderBy: [{ createdAt: "desc" }],
     });
   } catch {
-    // A missing database should not crash the public editorial shell.
     return [];
   }
 }
@@ -35,7 +77,10 @@ export async function getActiveProductBySlug(slug: string) {
       include: {
         images: { orderBy: { position: "asc" } },
         category: true,
+        categoryLinks: { include: { category: true } },
         variants: { where: { isActive: true }, orderBy: { label: "asc" } },
+        attributeValues: { include: { attribute: true } },
+        productType: true,
       },
     });
   } catch {

@@ -76,7 +76,7 @@ export function AdminProductEditForm({ product }: { product: EditableProduct }) 
       if (!form.categoryIds.length) throw new Error("Select at least one category.");
       if (!form.categoryIds.includes(form.primaryCategoryId)) throw new Error("Choose a primary category from the selected categories.");
       const attributes: Record<string, unknown> = {};
-      for (const link of selectedType?.attributes ?? []) {
+      for (const link of selectedType?.attributes.filter(link => !link.attribute.isVariantAxis) ?? []) {
         const raw = attributeValues[link.attribute.id];
         if (raw === undefined || raw === "" || (Array.isArray(raw) && raw.length === 0)) {
           if (link.isRequired) throw new Error(`${link.attribute.name} is required.`);

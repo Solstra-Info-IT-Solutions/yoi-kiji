@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 
 type CategoryOption = { id: string; name: string; slug: string; parentId: string | null; isActive: boolean };
-type DynamicAttribute = { id: string; isRequired: boolean; isFilterable: boolean; attribute: { id: string; name: string; key: string; type: string; unit: string | null; options: unknown } };
+type DynamicAttribute = { id: string; isRequired: boolean; isFilterable: boolean; attribute: { id: string; name: string; key: string; type: string; unit: string | null; options: unknown; isVariantAxis: boolean } };
 type ProductTypeOption = { id: string; name: string; slug: string; attributes: DynamicAttribute[] };
 const emptyForm = { name:"", slug:"", description:"", sku:"", hsnCode:"", material:"", color:"", careInstructions:"", weightGrams:"", lengthMm:"", widthMm:"", heightMm:"", gstRate:"0", price:"", stock:"", categoryId:"", productTypeId:"", imageUrl:"", imageAlt:"" };
 
@@ -70,7 +70,7 @@ export function AdminProductForm() {
       <label>GST rate (%)<input required type="number" min="0" max="100" step=".01" value={form.gstRate} onChange={e=>set("gstRate",e.target.value)}/></label>
       <label>Price (INR)<input required type="number" min="1" step=".01" value={form.price} onChange={e=>set("price",e.target.value)}/></label>
       <label>Opening stock<input required type="number" min="0" step="1" value={form.stock} onChange={e=>set("stock",e.target.value)}/></label>
-      {selectedType&&selectedType.attributes.length>0&&<div className="admin-form-wide admin-dynamic-fields"><p className="eyebrow">{selectedType.name.toUpperCase()} SPECIFICATIONS</p><div className="admin-product-form">{selectedType.attributes.map(renderAttribute)}</div></div>}
+      {selectedType&&selectedType.attributes.length>0&&<div className="admin-form-wide admin-dynamic-fields"><p className="eyebrow">{selectedType.name.toUpperCase()} SPECIFICATIONS</p><div className="admin-product-form">{selectedType.attributes.filter(link=>!link.attribute.isVariantAxis).map(renderAttribute)}</div></div>}
       <label className="admin-form-wide">Care instructions<textarea value={form.careInstructions} onChange={e=>set("careInstructions",e.target.value)}/></label>
       <label className="admin-form-wide">Description<textarea required minLength={10} value={form.description} onChange={e=>set("description",e.target.value)}/></label>
       <label className="admin-form-wide">Image URL (optional)<input type="url" value={form.imageUrl} onChange={e=>set("imageUrl",e.target.value)}/></label>

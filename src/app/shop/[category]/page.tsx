@@ -5,7 +5,6 @@ import { getActiveProducts, storefrontCategories } from "@/lib/catalog";
 import { formatINR } from "@/lib/money";
 
 type Props = { params: Promise<{ category: string }> };
-export function generateStaticParams() { return storefrontCategories.map(c => ({ category: c.slug })); }
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { category } = await params;
   const item = storefrontCategories.find(c => c.slug === category);

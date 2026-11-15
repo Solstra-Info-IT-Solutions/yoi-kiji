@@ -20,7 +20,6 @@ export default async function ProductPage({ params }: Props) {
     <section className="product-detail">
       <div className="product-gallery">{product.images.length ? product.images.map(image=><img key={image.id} src={image.url} alt={image.alt}/>) : <div className="product-image-placeholder">YOI KIJI</div>}</div>
       <div className="product-detail-copy"><p className="eyebrow">{product.category?.name ?? "YOI KIJI COLLECTION"}</p><h1>{product.name}</h1><p className="product-detail-price">{formatINR(product.pricePaise)}</p><p className="product-description">{product.description}</p>
-      {product.variants.length>0 && <fieldset className="variant-options"><legend>Choose an option</legend><div>{product.variants.map(v=><span key={v.id}>{v.label}</span>)}</div></fieldset>}
       <ProductPurchase productId={product.id} variants={product.variants.map(v=>({id:v.id,label:v.label,inventoryQty:v.inventoryQty,pricePaise:v.pricePaise}))} hasVariants={product.hasVariants} inventoryQty={product.inventoryQty}/>
       <p className="product-detail-note">Prices are shown in INR. Delivery availability and charges are confirmed during checkout.</p>
       </div>

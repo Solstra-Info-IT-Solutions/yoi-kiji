@@ -1,3 +1,5 @@
+import { SiteHeader } from "@/components/site-header";
+
 const categories = [
   { number: "01", name: "Bedsheets", note: "A softer beginning and end to every day.", image: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=1200&q=88", slug: "bedsheets" },
   { number: "02", name: "Curtains", note: "Light, filtered to feel just right.", image: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=1200&q=88", slug: "curtains" },
@@ -12,11 +14,7 @@ export default function HomePage() {
   return (
     <main>
       <div className="announcement"><span>TEXTILES FOR THE WAY YOU LIVE</span><i>✳</i><span>COMFORT, CONSIDERED</span></div>
-      <header className="site-header">
-        <a className="wordmark" href="/" aria-label="YOI KIJI home"><span className="wordmark-main">YOI KIJI</span><span className="wordmark-sub">THE ART OF TEXTILE LIVING</span></a>
-        <nav aria-label="Main navigation"><a href="/shop">Shop all</a><a href="/shop/bedsheets">Bedsheets</a><a href="/shop/curtains">Curtains</a><a href="#story">Our story</a></nav>
-        <div className="header-actions"><a href="/search" aria-label="Search">Search</a><a href="/account">Account</a><a className="bag-link" href="/cart">Bag <span>0</span></a></div>
-      </header>
+      <SiteHeader/>
 
       <section className="hero">
         <div className="hero-photo" role="img" aria-label="Beautifully layered bed linen in a calm, natural bedroom">

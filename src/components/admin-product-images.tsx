@@ -123,7 +123,7 @@ export function AdminProductImages({
   return <section className="admin-media-manager">
     <p className="eyebrow">PRODUCT MEDIA · {images.length} IMAGE(S)</p>
     <div className="admin-media-grid">
-      {images.sort((a, b) => a.position - b.position).map(image => <article key={image.id}>
+      {[...images].sort((a, b) => a.position - b.position).map(image => <article key={image.id}>
         <img src={image.url} alt={image.alt}/>
         <p>{image.alt}</p>
         <small>{image.variantId ? variants.find(variant => variant.id === image.variantId)?.label ?? "SKU image" : "All variants"}</small>

@@ -46,6 +46,22 @@ export async function POST(request: NextRequest) {
     attribute.variantAxis && !["TEXT", "NUMBER", "SELECT"].includes(attribute.type)
   );
   if (unsupportedAxis) return NextResponse.json({ error: `Variant axis ${unsupportedAxis.name} must use TEXT, NUMBER or SELECT.` }, { status: 400 });
+  const existingDefinitions = await prisma.attributeDefinition.findMany({
+    where: { key: { in: data.attributes.map(attribute => attribute.key) } },
+  });
+  const existingByKey = new Map(existingDefinitions.map(attribute => [attribute.key, attribute]));
+  const conflictingAttribute = data.attributes.find(item => {
+    const existing = existingByKey.get(item.key);
+    if (!existing) return false;
+    return existing.name !== item.name || existing.type !== item.type ||
+      existing.unit !== (item.unit ?? null) ||
+      existing.isFilterable !== item.filterable ||
+      existing.isVariantAxis !== item.variantAxis ||
+      JSON.stringify(existing.options ?? null) !== JSON.stringify(item.options ?? null);
+  });
+  if (conflictingAttribute) {
+    return NextResponse.json({ error: `Attribute key "${conflictingAttribute.key}" already exists with a different shared definition. Use a new key or match its existing definition.` }, { status: 409 });
+  }
   try {
     const productType = await prisma.$transaction(async tx => {
       const created = await tx.productType.create({ data: { name: data.name, slug: data.slug, description: data.description } });

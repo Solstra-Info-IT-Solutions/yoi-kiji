@@ -31,7 +31,7 @@ export function AdminProductForm() {
     event.preventDefault();setBusy(true);setMessage("");
     try{
       const attributes:Record<string,unknown>={};
-      for(const link of selectedType?.attributes??[]){
+      for(const link of selectedType?.attributes.filter(link=>!link.attribute.isVariantAxis)??[]){
         const raw=attributeValues[link.attribute.id];
         if(raw===undefined||raw===""||(Array.isArray(raw)&&raw.length===0)){if(link.isRequired)throw new Error(`${link.attribute.name} is required for this product type.`);continue;}
         attributes[link.attribute.id]=link.attribute.type==="NUMBER"?Number(raw):raw;

@@ -1,0 +1,2 @@
+ALTER TABLE "Product" ADD COLUMN "hsnCode" TEXT;
+ALTER TABLE "OrderItem" ADD COLUMN "hsnCode" TEXT;

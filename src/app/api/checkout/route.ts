@@ -55,7 +55,7 @@ export async function POST(request:NextRequest){
     return tx.order.create({data:{
      orderNumber,userId:user.id,status:"PENDING",subtotalPaise,taxPaise,shippingPaise,totalPaise,
      shippingAddress:parsed.data.shippingAddress,billingAddress:parsed.data.shippingAddress,
-     items:{create:lineItems.map(l=>({productId:l.product.id,variantId:l.variant?.id,productName:l.product.name,variantLabel:l.label,sku:l.sku,quantity:l.quantity,unitPricePaise:l.price,gstRateBps:l.product.gstRateBps}))},
+     items:{create:lineItems.map(l=>({productId:l.product.id,variantId:l.variant?.id,productName:l.product.name,variantLabel:l.label,sku:l.sku,hsnCode:l.product.hsnCode,quantity:l.quantity,unitPricePaise:l.price,gstRateBps:l.product.gstRateBps}))},
      payment:{create:{provider:"RAZORPAY",providerOrderId:gateway.id,amountPaise:totalPaise,currency:"INR",status:"CREATED"}}
     }});
    });

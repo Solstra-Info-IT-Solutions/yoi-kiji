@@ -38,6 +38,30 @@ export async function POST(request: NextRequest) {
   const data = parsed.data;
   const duplicateKeys = data.attributes.map(a => a.key).filter((key, index, all) => all.indexOf(key) !== index);
   if (duplicateKeys.length) return NextResponse.json({ error: `Duplicate attribute keys: ${[...new Set(duplicateKeys)].join(", ")}` }, { status: 400 });
+  const invalidOptions = data.attributes.find(attribute =>
+    (attribute.type === "SELECT" || attribute.type === "MULTI_SELECT") && (!attribute.options || attribute.options.length === 0)
+  );
+  if (invalidOptions) return NextResponse.json({ error: `${invalidOptions.name} needs at least one allowed option.` }, { status: 400 });
+  const unsupportedAxis = data.attributes.find(attribute =>
+    attribute.variantAxis && !["TEXT", "NUMBER", "SELECT"].includes(attribute.type)
+  );
+  if (unsupportedAxis) return NextResponse.json({ error: `Variant axis ${unsupportedAxis.name} must use TEXT, NUMBER or SELECT.` }, { status: 400 });
+  const existingDefinitions = await prisma.attributeDefinition.findMany({
+    where: { key: { in: data.attributes.map(attribute => attribute.key) } },
+  });
+  const existingByKey = new Map(existingDefinitions.map(attribute => [attribute.key, attribute]));
+  const conflictingAttribute = data.attributes.find(item => {
+    const existing = existingByKey.get(item.key);
+    if (!existing) return false;
+    return existing.name !== item.name || existing.type !== item.type ||
+      existing.unit !== (item.unit ?? null) ||
+      existing.isFilterable !== item.filterable ||
+      existing.isVariantAxis !== item.variantAxis ||
+      JSON.stringify(existing.options ?? null) !== JSON.stringify(item.options ?? null);
+  });
+  if (conflictingAttribute) {
+    return NextResponse.json({ error: `Attribute key "${conflictingAttribute.key}" already exists with a different shared definition. Use a new key or match its existing definition.` }, { status: 409 });
+  }
   try {
     const productType = await prisma.$transaction(async tx => {
       const created = await tx.productType.create({ data: { name: data.name, slug: data.slug, description: data.description } });

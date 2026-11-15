@@ -19,9 +19,9 @@ export default async function ProductPage({ params }: Props) {
     <div className="commerce-breadcrumb"><Link href="/">Home</Link><span>/</span><Link href="/shop">Shop</Link><span>/</span>{product.name}</div>
     <section className="product-detail">
       <div className="product-gallery">{product.images.length ? product.images.map(image=><img key={image.id} src={image.url} alt={image.alt}/>) : <div className="product-image-placeholder">YOI KIJI</div>}</div>
-      <div className="product-detail-copy"><p className="eyebrow">{product.category?.name ?? "YOI KIJI COLLECTION"}</p><h1>{product.name}</h1><p className="product-detail-price">{formatINR(product.pricePaise)}</p><p className="product-description">{product.description}</p>
+      <div className="product-detail-copy"><p className="eyebrow">{product.category?.name ?? "YOI KIJI COLLECTION"}</p><h1>{product.name}</h1><p className="product-description">{product.description}</p>
       {(product.material||product.color||product.careInstructions||product.lengthMm||product.widthMm||product.heightMm)&&<dl className="product-specs">{product.material&&<div><dt>Material</dt><dd>{product.material}</dd></div>}{product.color&&<div><dt>Colour</dt><dd>{product.color}</dd></div>}{(product.lengthMm||product.widthMm||product.heightMm)&&<div><dt>Dimensions</dt><dd>{[product.lengthMm,product.widthMm,product.heightMm].filter(Boolean).join(" × ")} mm</dd></div>}{product.careInstructions&&<div><dt>Care</dt><dd>{product.careInstructions}</dd></div>}</dl>}
-      <ProductPurchase productId={product.id} variants={product.variants.map(v=>({id:v.id,label:v.label,inventoryQty:v.inventoryQty,pricePaise:v.pricePaise}))} hasVariants={product.hasVariants} inventoryQty={product.inventoryQty}/>
+      <ProductPurchase productId={product.id} variants={product.variants.map(v=>({id:v.id,label:v.label,inventoryQty:v.inventoryQty,pricePaise:v.pricePaise}))} hasVariants={product.hasVariants} inventoryQty={product.inventoryQty} basePricePaise={product.pricePaise}/>
       <p className="product-detail-note">Prices are shown in INR. Delivery availability and charges are confirmed during checkout.</p>
       </div>
     </section>

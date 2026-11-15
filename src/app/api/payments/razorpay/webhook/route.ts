@@ -8,6 +8,17 @@ export async function POST(request:NextRequest){
  const expected=createHmac("sha256",secret).update(raw).digest("hex");const a=Buffer.from(expected),b=Buffer.from(signature);
  if(a.length!==b.length||!timingSafeEqual(a,b))return NextResponse.json({error:"Invalid signature."},{status:400});
  const eventId=request.headers.get("x-razorpay-event-id");let event:any;try{event=JSON.parse(raw)}catch{return NextResponse.json({error:"Invalid payload."},{status:400})}
+ if(event.event==="refund.processed"||event.event==="refund.failed"){
+  const refund=event?.payload?.refund?.entity;const paymentRef=refund?.payment_id;
+  if(paymentRef){
+   const matched=await prisma.payment.findUnique({where:{providerPaymentId:paymentRef}});
+   if(matched){
+    const processed=event.event==="refund.processed";
+    await prisma.$transaction([prisma.payment.update({where:{id:matched.id},data:{refundId:refund.id??matched.refundId,refundStatus:processed?"processed":"failed",status:processed?"REFUNDED":matched.status,webhookEventId:eventId??undefined}}),...(processed?[prisma.order.update({where:{id:matched.orderId},data:{status:"REFUNDED"}})]:[])]);
+   }
+  }
+  return NextResponse.json({received:true});
+ }
  const gatewayOrderId=event?.payload?.payment?.entity?.order_id??event?.payload?.order?.entity?.id;const paymentId=event?.payload?.payment?.entity?.id;
  if(!gatewayOrderId)return NextResponse.json({received:true});
  const payment=await prisma.payment.findUnique({where:{providerOrderId:gatewayOrderId},include:{order:{include:{items:true}}}});
@@ -28,15 +39,6 @@ export async function POST(request:NextRequest){
   // A failed attempt does not release reserved stock: the same Razorpay order may be retried.
   await prisma.payment.update({where:{id:payment.id},data:{status:"FAILED",providerPaymentId:paymentId??undefined,webhookEventId:eventId??undefined}});
 
- }else if(event.event==="refund.processed"||event.event==="refund.failed"){
-  const refund=event?.payload?.refund?.entity;const paymentRef=refund?.payment_id;
-  if(paymentRef){
-   const matched=await prisma.payment.findUnique({where:{providerPaymentId:paymentRef}});
-   if(matched){
-    const processed=event.event==="refund.processed";
-    await prisma.$transaction([prisma.payment.update({where:{id:matched.id},data:{refundId:refund.id??matched.refundId,refundStatus:processed?"processed":"failed",status:processed?"REFUNDED":matched.status,webhookEventId:eventId??undefined}}),...(processed?[prisma.order.update({where:{id:matched.orderId},data:{status:"REFUNDED"}})]:[])]);
-   }
-  }
  }
  return NextResponse.json({received:true});
 }

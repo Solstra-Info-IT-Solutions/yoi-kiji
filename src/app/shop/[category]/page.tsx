@@ -50,7 +50,14 @@ export default async function CategoryPage({ params, searchParams }: Props) {
       if (!(link.isFilterable || attribute.isFilterable)) continue;
       const configured = Array.isArray(attribute.options) ? attribute.options.filter((value): value is string => typeof value === "string") : [];
       const currentValue = product.attributeValues.find(value => value.attributeId === attribute.id)?.value;
-      const observed = Array.isArray(currentValue) ? currentValue.map(displayValue) : currentValue === null || currentValue === undefined ? [] : [displayValue(currentValue)];
+      const variantValues = attribute.isVariantAxis ? product.variants.flatMap(variant => {
+        const attributes = variant.attributes;
+        if (!attributes || typeof attributes !== "object" || Array.isArray(attributes)) return [];
+        return [(attributes as Record<string, unknown>)[attribute.key]];
+      }) : [];
+      const observed = attribute.isVariantAxis
+        ? variantValues.flatMap(value => value === null || value === undefined ? [] : Array.isArray(value) ? value.map(displayValue) : [displayValue(value)])
+        : Array.isArray(currentValue) ? currentValue.map(displayValue) : currentValue === null || currentValue === undefined ? [] : [displayValue(currentValue)];
       const existing = facetsByKey.get(attribute.key);
       const options = existing?.options ?? [];
       const candidates = configured.length ? configured : observed;
@@ -61,11 +68,30 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   const facets = [...facetsByKey.values()].filter(facet => facet.options.length > 0).sort((a, b) => a.name.localeCompare(b.name));
   const activeFilters = Object.fromEntries(facets.map(facet => [facet.key, asValues(query[`f_${facet.key}`])]).filter(([, values]) => values.length > 0)) as Record<string, string[]>;
 
-  let products = catalogueProducts.filter(product => Object.entries(activeFilters).every(([key, selected]) => {
-    const value = product.attributeValues.find(item => item.attribute.key === key)?.value;
-    const values = Array.isArray(value) ? value.map(displayValue) : value === null || value === undefined ? [] : [displayValue(value)];
-    return selected.some(option => values.includes(option));
-  }));
+  const variantAxisKeys = new Set(catalogueProducts.flatMap(product =>
+    product.productType?.attributes.filter(link => link.attribute.isVariantAxis).map(link => link.attribute.key) ?? []
+  ));
+  const parentFilters = Object.entries(activeFilters).filter(([key]) => !variantAxisKeys.has(key));
+  const variantFilters = Object.entries(activeFilters).filter(([key]) => variantAxisKeys.has(key));
+  let products = catalogueProducts.filter(product => {
+    const matchesParentAttributes = parentFilters.every(([key, selected]) => {
+      const value = product.attributeValues.find(item => item.attribute.key === key)?.value;
+      const values = Array.isArray(value) ? value.map(displayValue) : value === null || value === undefined ? [] : [displayValue(value)];
+      return selected.some(option => values.includes(option));
+    });
+    if (!matchesParentAttributes) return false;
+    if (!variantFilters.length) return true;
+    return product.variants.some(variant => {
+      const attributes = variant.attributes && typeof variant.attributes === "object" && !Array.isArray(variant.attributes)
+        ? variant.attributes as Record<string, unknown>
+        : {};
+      return variantFilters.every(([key, selected]) => {
+        const value = attributes[key];
+        const values = Array.isArray(value) ? value.map(displayValue) : value === null || value === undefined ? [] : [displayValue(value)];
+        return selected.some(option => values.includes(option));
+      });
+    });
+  });
 
   const sort = typeof query.sort === "string" ? query.sort : "newest";
   products = [...products].sort((a, b) => {

@@ -12,7 +12,7 @@ export async function POST(request:NextRequest){
  if(!gatewayOrderId)return NextResponse.json({received:true});
  const payment=await prisma.payment.findUnique({where:{providerOrderId:gatewayOrderId},include:{order:{include:{items:true}}}});
  if(!payment)return NextResponse.json({received:true});
- if((eventId&&payment.webhookEventId===eventId)||payment.status==="CAPTURED")return NextResponse.json({received:true,duplicate:true});
+ if((eventId&&payment.webhookEventId===eventId)||payment.status==="CAPTURED"||payment.status==="REFUNDED")return NextResponse.json({received:true,duplicate:true});
  if(event.event==="payment.captured"||event.event==="order.paid"){
   if(payment.order.status==="CANCELLED"){
    const keyId=process.env.RAZORPAY_KEY_ID,apiSecret=process.env.RAZORPAY_KEY_SECRET;
@@ -20,7 +20,7 @@ export async function POST(request:NextRequest){
    const auth=Buffer.from(keyId+":"+apiSecret).toString("base64");
    const refundResponse=await fetch("https://api.razorpay.com/v1/payments/"+paymentId+"/refund",{method:"POST",headers:{Authorization:"Basic "+auth,"Content-Type":"application/json"},body:JSON.stringify({amount:payment.amountPaise,receipt:"late-"+payment.order.orderNumber}),cache:"no-store"});
    if(!refundResponse.ok)return NextResponse.json({error:"Automatic refund of a late payment failed; reconciliation required."},{status:503});
-   await prisma.$transaction([prisma.payment.update({where:{id:payment.id},data:{status:"REFUNDED",providerPaymentId:paymentId,webhookEventId:eventId??undefined}}),prisma.order.update({where:{id:payment.orderId},data:{status:"REFUNDED"}})]);
+   await prisma.$transaction([prisma.payment.update({where:{id:payment.id},data:{status:"REFUNDED",providerPaymentId:paymentId,webhookEventId:eventId??undefined,refundStatus:"processed"}}),prisma.order.update({where:{id:payment.orderId},data:{status:"REFUNDED"}})]);
   }else{
    await prisma.$transaction([prisma.payment.update({where:{id:payment.id},data:{status:"CAPTURED",providerPaymentId:paymentId??undefined,webhookEventId:eventId??undefined}}),prisma.order.update({where:{id:payment.orderId},data:{status:"CONFIRMED"}})]);
   }
@@ -28,6 +28,15 @@ export async function POST(request:NextRequest){
   // A failed attempt does not release reserved stock: the same Razorpay order may be retried.
   await prisma.payment.update({where:{id:payment.id},data:{status:"FAILED",providerPaymentId:paymentId??undefined,webhookEventId:eventId??undefined}});
 
+ }else if(event.event==="refund.processed"||event.event==="refund.failed"){
+  const refund=event?.payload?.refund?.entity;const paymentRef=refund?.payment_id;
+  if(paymentRef){
+   const matched=await prisma.payment.findUnique({where:{providerPaymentId:paymentRef}});
+   if(matched){
+    const processed=event.event==="refund.processed";
+    await prisma.$transaction([prisma.payment.update({where:{id:matched.id},data:{refundId:refund.id??matched.refundId,refundStatus:processed?"processed":"failed",status:processed?"REFUNDED":matched.status,webhookEventId:eventId??undefined}}),...(processed?[prisma.order.update({where:{id:matched.orderId},data:{status:"REFUNDED"}})]:[])]);
+   }
+  }
  }
  return NextResponse.json({received:true});
 }

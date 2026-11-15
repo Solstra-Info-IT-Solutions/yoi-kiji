@@ -4,17 +4,34 @@ import { notFound } from "next/navigation";
 import { getActiveCategories, getActiveCategoryBySlug, getActiveProducts } from "@/lib/catalog";
 import { formatINR } from "@/lib/money";
 
-type Props = { params: Promise<{ category: string }> };
+type SearchParams = Record<string, string | string[] | undefined>;
+type Props = { params: Promise<{ category: string }>; searchParams: Promise<SearchParams> };
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { category } = await params;
   const item = await getActiveCategoryBySlug(category);
   return item ? { title: item.seoTitle ?? item.name, description: item.seoDescription ?? item.description ?? undefined } : {};
 }
-export default async function CategoryPage({ params }: Props) {
-  const { category } = await params;
-  const [item, categories] = await Promise.all([getActiveCategoryBySlug(category), getActiveCategories()]);
+
+function asValues(value: string | string[] | undefined): string[] {
+  if (Array.isArray(value)) return value;
+  return value ? [value] : [];
+}
+
+function displayValue(value: unknown): string {
+  if (typeof value === "boolean") return value ? "Yes" : "No";
+  return String(value);
+}
+
+export default async function CategoryPage({ params, searchParams }: Props) {
+  const [{ category }, query] = await Promise.all([params, searchParams]);
+  const [item, categories, catalogueProducts] = await Promise.all([
+    getActiveCategoryBySlug(category),
+    getActiveCategories(),
+    getActiveProducts(category),
+  ]);
   if (!item) notFound();
-  const products = await getActiveProducts(category);
+
   const children = categories.filter(c => c.parentId === item.id);
   const siblings = categories.filter(c => c.parentId === item.parentId && c.id !== item.id);
   const ancestors: { name: string; slug: string }[] = [];
@@ -25,11 +42,60 @@ export default async function CategoryPage({ params }: Props) {
     ancestors.unshift({ name: parent.name, slug: parent.slug });
     parentId = parent.parentId;
   }
+
+  const facetsByKey = new Map<string, { key: string; name: string; unit: string | null; options: string[] }>();
+  for (const product of catalogueProducts) {
+    for (const link of product.productType?.attributes ?? []) {
+      const attribute = link.attribute;
+      if (!(link.isFilterable || attribute.isFilterable)) continue;
+      const configured = Array.isArray(attribute.options) ? attribute.options.filter((value): value is string => typeof value === "string") : [];
+      const currentValue = product.attributeValues.find(value => value.attributeId === attribute.id)?.value;
+      const observed = Array.isArray(currentValue) ? currentValue.map(displayValue) : currentValue === null || currentValue === undefined ? [] : [displayValue(currentValue)];
+      const existing = facetsByKey.get(attribute.key);
+      const options = existing?.options ?? [];
+      const candidates = configured.length ? configured : observed;
+      for (const option of candidates) if (!options.includes(option)) options.push(option);
+      facetsByKey.set(attribute.key, { key: attribute.key, name: attribute.name, unit: attribute.unit, options });
+    }
+  }
+  const facets = [...facetsByKey.values()].filter(facet => facet.options.length > 0).sort((a, b) => a.name.localeCompare(b.name));
+  const activeFilters = Object.fromEntries(facets.map(facet => [facet.key, asValues(query[`f_${facet.key}`])]).filter(([, values]) => values.length > 0)) as Record<string, string[]>;
+
+  let products = catalogueProducts.filter(product => Object.entries(activeFilters).every(([key, selected]) => {
+    const value = product.attributeValues.find(item => item.attribute.key === key)?.value;
+    const values = Array.isArray(value) ? value.map(displayValue) : value === null || value === undefined ? [] : [displayValue(value)];
+    return selected.some(option => values.includes(option));
+  }));
+
+  const sort = typeof query.sort === "string" ? query.sort : "newest";
+  products = [...products].sort((a, b) => {
+    if (sort === "price-asc") return a.pricePaise - b.pricePaise;
+    if (sort === "price-desc") return b.pricePaise - a.pricePaise;
+    if (sort === "name") return a.name.localeCompare(b.name);
+    return b.createdAt.getTime() - a.createdAt.getTime();
+  });
+
   return <main className="commerce-page">
     <div className="commerce-breadcrumb"><Link href="/">Home</Link><span>/</span><Link href="/shop">Shop</Link>{ancestors.map(a=><span key={a.slug}>/ <Link href={`/shop/${a.slug}`}>{a.name}</Link></span>)}<span>/</span> {item.name}</div>
     <header className="commerce-heading"><p className="eyebrow">YOI KIJI / THE COLLECTION</p><h1>{item.name}<br/><em>for living well.</em></h1>{item.description&&<p>{item.description}</p>}</header>
     {children.length > 0 && <section className="category-subcollections"><p className="eyebrow">EXPLORE THIS COLLECTION</p><nav className="category-pills" aria-label={`Browse ${item.name} subcategories`}>{children.map(child=><Link key={child.id} href={`/shop/${child.slug}`}>{child.name}</Link>)}</nav></section>}
     {siblings.length > 0 && <nav className="category-pills" aria-label="Related categories">{siblings.map(c=><Link key={c.id} href={`/shop/${c.slug}`}>{c.name}</Link>)}</nav>}
-    {products.length ? <section className="product-grid">{products.map(p=><Link className="product-card" href={`/products/${p.slug}`} key={p.id}><div className="product-card-image">{p.images[0] ? <img src={p.images[0].url} alt={p.images[0].alt}/> : <span>YOI KIJI</span>}</div><p className="product-card-category">{item.name}</p><h2>{p.name}</h2><p className="product-card-price">{formatINR(p.pricePaise)}</p></Link>)}</section> : <section className="catalogue-empty"><span className="empty-mark">✳</span><h2>Something thoughtful is on its way.</h2><p>We are preparing the {item.name.toLowerCase()} collection. In the meantime, explore the other collections.</p><Link className="primary-link" href="/shop">Explore all collections <span>↗</span></Link></section>}
+    <div className="catalogue-toolbar">
+      <p>{products.length} {products.length === 1 ? "piece" : "pieces"}</p>
+      <form method="get" className="catalogue-sort">
+        {Object.entries(activeFilters).flatMap(([key, values]) => values.map(value => <input key={key + value} type="hidden" name={`f_${key}`} value={value}/>))}
+        <label>Sort by <select name="sort" defaultValue={sort} onChange="this.form.submit()"><option value="newest">Newest</option><option value="price-asc">Price: low to high</option><option value="price-desc">Price: high to low</option><option value="name">Name</option></select></label>
+      </form>
+    </div>
+    {facets.length > 0 && <form method="get" className="catalogue-filters">
+      <div className="catalogue-filter-heading"><p className="eyebrow">REFINE THE COLLECTION</p><Link href={`/shop/${item.slug}`}>Clear filters</Link></div>
+      <input type="hidden" name="sort" value={sort}/>
+      <div className="catalogue-filter-grid">{facets.map(facet => <fieldset key={facet.key}>
+        <legend>{facet.name}{facet.unit ? ` · ${facet.unit}` : ""}</legend>
+        {facet.options.map(option => <label key={option}><input type="checkbox" name={`f_${facet.key}`} value={option} defaultChecked={activeFilters[facet.key]?.includes(option) ?? false}/><span>{option}</span></label>)}
+      </fieldset>)}</div>
+      <button className="primary-link" type="submit">Apply filters <span>↗</span></button>
+    </form>}
+    {products.length ? <section className="product-grid">{products.map(p=><Link className="product-card" href={`/products/${p.slug}`} key={p.id}><div className="product-card-image">{p.images[0] ? <img src={p.images[0].url} alt={p.images[0].alt}/> : <span>YOI KIJI</span>}</div><p className="product-card-category">{item.name}</p><h2>{p.name}</h2><p className="product-card-price">{formatINR(p.pricePaise)}</p></Link>)}</section> : <section className="catalogue-empty"><span className="empty-mark">✳</span><h2>{catalogueProducts.length ? "No pieces match these filters." : "Something thoughtful is on its way."}</h2><p>{catalogueProducts.length ? "Try removing one or more filters to see more of this collection." : `We are preparing the ${item.name.toLowerCase()} collection. In the meantime, explore the other collections.`}</p><Link className="primary-link" href={catalogueProducts.length ? `/shop/${item.slug}` : "/shop"}>{catalogueProducts.length ? "Clear filters" : "Explore all collections"} <span>↗</span></Link></section>}
   </main>;
 }

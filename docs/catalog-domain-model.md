@@ -145,4 +145,16 @@ Admin entry points:
 - `/admin/product-types` — configure product families and reusable typed attributes.
 - `/admin/products` — create a product with the selected product type's dynamic fields.
 
-The storefront reads active categories from the database. Parent category pages include products assigned directly to that category and to its descendants. Product detail pages render the saved product-type attributes. Variant-axis metadata is recorded in the attribute blueprint; the full variant matrix/SKU generator remains a separate implementation milestone before using those axes for purchasable combinations.
+The storefront reads active categories from the database. Parent category pages include products assigned directly to that category and to its descendants. Product detail pages render the saved product-type attributes. Variant-axis metadata is handled at the sellable SKU level rather than as parent-product specifications. The catalogue operations workstream adds full product editing, multiple category placements with one primary category, dynamic category facets from filterable product-type attributes, URL-persisted filters, sorting, bulk combination generation for SELECT axes, SKU editing, stock adjustment auditing and safe SKU archival. Matrix generation is capped at 250 combinations per request; numeric and free-text axes can be entered through the single-SKU workflow.
+
+
+## 10. Catalogue operations workflow
+
+- `/admin/products` supports editing product identity, merchandising copy, commercial fields, packed dimensions, HSN, GST rate, inventory, product type, dynamic specifications, publication state and category placements.
+- A product may be assigned to multiple active categories. Exactly one selected category is marked primary and mirrored into the legacy `Product.categoryId` field for compatibility.
+- Product-type variant-axis attributes are reserved for `ProductVariant.attributes`; they are not required as parent-product specifications.
+- Category facets are generated from attributes explicitly marked filterable on the product-type link or attribute definition. Selected values are stored in query parameters such as `f_colour=Ivory`; filters combine across attributes and use OR within one attribute.
+- Sort options include newest, price ascending, price descending and product name.
+- Variant matrix generation currently supports SELECT axes and is limited to 250 combinations per request. Generated SKUs use the parent SKU plus normalized option values; administrators must review the preview and resolve any collisions before creating.
+- Variants can be edited and archived. Archival sets `isActive=false`; it never deletes a SKU or its order history. Stock corrections are written to `InventoryMovement`.
+- Product and variant prices remain integer paise. No tax, textile, certification or performance values are inferred by the application.

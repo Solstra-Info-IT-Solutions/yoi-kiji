@@ -60,7 +60,7 @@ export async function getCurrentUser() {
   try {
     const data = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as { sub: string; exp: number };
     if (!data.sub || data.exp < Math.floor(Date.now()/1000)) return null;
-    return await prisma.user.findUnique({ where: { id: data.sub }, select: { id: true, email: true, name: true, role: true } });
+    return await prisma.user.findUnique({ where: { id: data.sub }, select: { id: true, email: true, name: true, role: true, whatsappOptIn: true } });
   } catch {
     return null;
   }

@@ -21,6 +21,9 @@ export async function POST(request:NextRequest){
  const shippingRaw=process.env.SHIPPING_FLAT_RATE_PAISE;
  if(!shippingRaw||!/^\d+$/.test(shippingRaw))return fail("Delivery pricing is being configured. Checkout will open shortly.",503);
  const shippingPaise=Number(shippingRaw);if(!Number.isSafeInteger(shippingPaise))return fail("Delivery pricing is not configured correctly.",503);
+ const shippingTaxRaw=process.env.SHIPPING_TAX_RATE_BPS;
+ if(!shippingTaxRaw||!/^\\d+$/.test(shippingTaxRaw)||Number(shippingTaxRaw)>10000)return fail("Shipping tax treatment is awaiting seller confirmation.",503);
+ const shippingTaxRateBps=Number(shippingTaxRaw);
   if(process.env.SHIPPING_DEFAULT_PROVIDER==="ATS")return fail("Amazon Shipping integration is awaiting the seller's official API credentials.",503);
   if(process.env.SHIPPING_DEFAULT_PROVIDER==="DELHIVERY"){
    try{const service=await checkDelhiveryServiceability(parsed.data.shippingAddress.postalCode);if(!service.serviceable)return fail("Delhivery does not currently service this PIN code.",400);}
@@ -39,7 +42,8 @@ export async function POST(request:NextRequest){
    return {product,variant,quantity:item.quantity,price:variant?.pricePaise??product.pricePaise,sku:variant?.sku??product.sku,label:variant?.label??null};
   });
   const subtotalPaise=lineItems.reduce((s,l)=>s+l.price*l.quantity,0);
-  const taxPaise=lineItems.reduce((s,l)=>s+calculateTaxInclusive(l.price*l.quantity,l.product.gstRateBps),0);
+  const productTaxPaise=lineItems.reduce((s,l)=>s+calculateTaxInclusive(l.price*l.quantity,l.product.gstRateBps),0);
+  const taxPaise=productTaxPaise+calculateTaxInclusive(shippingPaise,shippingTaxRateBps);
   const totalPaise=subtotalPaise+shippingPaise;
   if(!Number.isSafeInteger(totalPaise)||totalPaise<100)return fail("The order total is invalid.");
   const basic=Buffer.from(`${keyId}:${secret}`).toString("base64");

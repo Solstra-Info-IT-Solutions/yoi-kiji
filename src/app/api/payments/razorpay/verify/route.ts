@@ -18,6 +18,6 @@ export async function POST(request:NextRequest){
   prisma.payment.update({where:{id:payment.id},data:{status:"CAPTURED",providerPaymentId:parsed.data.razorpay_payment_id}}),
   prisma.order.update({where:{id:payment.orderId},data:{status:"CONFIRMED"}})
  ]);
- await Promise.all([sendOrderConfirmation(payment.orderId),sendWhatsAppOrderConfirmation(payment.orderId)]);
+ await Promise.allSettled([sendOrderConfirmation(payment.orderId),sendWhatsAppOrderConfirmation(payment.orderId)]);
  return NextResponse.json({verified:true,orderNumber:payment.order.orderNumber});
 }

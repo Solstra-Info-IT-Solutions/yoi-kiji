@@ -13,7 +13,7 @@ export async function PATCH(request:NextRequest,{params}:{params:Promise<{id:str
  if(parsed.data.status==="CANCELLED"&&order.payment?.status==="CAPTURED")return NextResponse.json({error:"This order has been paid. Issue a Razorpay refund before cancelling it."},{status:409});
  const updated=await prisma.$transaction(async tx=>{
   if(parsed.data.status==="CANCELLED"){
-   for(const item of order.items){if(item.variantId)await tx.productVariant.update({where:{id:item.variantId},data:{inventoryQty:{increment:item.quantity}}});else await tx.product.update({where:{id:item.productId},data:{inventoryQty:{increment:item.quantity}}});}
+   for(const item of order.items){if(item.variantId)await tx.productVariant.update({where:{id:item.variantId},data:{inventoryQty:{increment:item.quantity}}});else await tx.product.update({where:{id:item.productId},data:{inventoryQty:{increment:item.quantity}}});await tx.inventoryMovement.create({data:{productId:item.productId,variantId:item.variantId,quantityDelta:item.quantity,reason:"ORDER_CANCELLED",reference:order.orderNumber,createdBy:admin.id}});}
   }
   return tx.order.update({where:{id},data:{status:parsed.data.status}});
  });

@@ -36,7 +36,7 @@ export async function POST(request:NextRequest){
    await prisma.$transaction([prisma.payment.update({where:{id:payment.id},data:{status:processed?"REFUNDED":"CAPTURED",providerPaymentId:paymentId,webhookEventId:eventId??undefined,refundId:refundData.id,refundStatus:refundData.status,refundAmountPaise:refundData.amount}}),...(processed?[prisma.order.update({where:{id:payment.orderId},data:{status:"REFUNDED"}})]:[])]);
   }else{
    await prisma.$transaction([prisma.payment.update({where:{id:payment.id},data:{status:"CAPTURED",providerPaymentId:paymentId??undefined,webhookEventId:eventId??undefined}}),prisma.order.update({where:{id:payment.orderId},data:{status:"CONFIRMED"}})]);
-   await Promise.all([sendOrderConfirmation(payment.orderId),sendWhatsAppOrderConfirmation(payment.orderId)]);
+   await Promise.allSettled([sendOrderConfirmation(payment.orderId),sendWhatsAppOrderConfirmation(payment.orderId)]);
   }
  }else if(event.event==="payment.failed"){
   // A failed attempt does not release reserved stock: the same Razorpay order may be retried.

@@ -35,7 +35,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       }
       const scope = { productId: id, variantId };
       const existing = await tx.productImage.count({ where: scope });
-      const isPrimary = parsed.data.isPrimary ?? existing === 0;
+      const isPrimary = existing === 0 || parsed.data.isPrimary === true;
       if (isPrimary) await tx.productImage.updateMany({ where: scope, data: { isPrimary: false } });
       return tx.productImage.create({
         data: { ...scope, url: parsed.data.url, alt: parsed.data.alt, position: existing, isPrimary },

@@ -1,23 +1,31 @@
 # YOI KIJI — A Quieter Way of Living
 
-A premium, Japanese-inspired commerce platform. The experience is designed around considered discovery, clear product information, calm visual hierarchy, and dependable commerce workflows.
+A premium home-textile commerce platform with a deep-green visual identity and considered product discovery.
+
+## Client-approved brand direction
+- Primary brand green: `#0E300E`
+- Off-white: `#E9E9E9`
+- Product categories: Bedsheets, Curtains, Upholstery, Bath Linen, Kitchen Linen.
+- Bedsheet variant labels: Single, Double, King, Fitted.
+- Proposed payment provider: Razorpay.
+- Shipping partners under consideration: Delhivery and ATS.
 
 ## Product principles
-- Quiet, editorial storefront with responsive layouts and accessible interactions.
-- Fast product discovery, transparent pricing, reliable cart and checkout.
-- Secure customer identity, order lifecycle, inventory controls, and auditable administration.
-- India-ready commerce foundations: INR, GST-aware tax modelling, shipping, Razorpay integration, and invoice generation.
+- Premium, editorial storefront with responsive and accessible layouts.
+- Clear product information, variant selection, cart and checkout.
+- Secure customer identity, order lifecycle, inventory controls and auditable administration.
+- India-ready commerce foundations: INR, GST-aware tax modelling, Razorpay payment verification, shipping integrations and invoice generation.
 - Never expose secrets in source control. Demo data and non-live integrations must be clearly identified.
 
 ## Technology baseline
 - Next.js App Router, React, TypeScript
 - PostgreSQL and Prisma
-- Node.js server-side application/API
 - Razorpay payment adapter (credentials and webhook secret supplied only through environment variables)
-- Automated unit, integration, and end-to-end tests
+- Shipping adapters for Delhivery / ATS (contract, account and API credentials required)
+- Automated unit, integration and end-to-end tests
 
 ## Repository status
-Initial project foundation. Production integrations, credentials, legal policies, shipping contracts, and business-specific tax settings must be configured and verified before launch.
+Brand palette and initial category taxonomy have been applied to the storefront. Product variant and fulfillment data foundations are represented in the Prisma schema. The project is not yet build-verified or production-ready. Payment, shipping, legal, tax and business-specific settings require client confirmation and secure credentials.
 
 ## Local development
 1. Install Node.js 22 or later and PostgreSQL.

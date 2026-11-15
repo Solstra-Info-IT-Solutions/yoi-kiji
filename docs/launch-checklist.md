@@ -5,6 +5,7 @@
 - [ ] Confirm final brand palette: deep green #0E300E and off-white #E9E9E9.
 - [ ] Confirm category names and descriptions: Bedsheets, Curtains, Upholstery, Bath Linen, Kitchen Linen.
 - [ ] Confirm bedsheet option labels and their exact dimensions: Single, Double, King, Fitted.
+- [ ] Confirm product HSN, GST rate, price tax basis, package weight and dimensions for each SKU.
 - [ ] Supply approved product photography, SKU, material, dimensions, care instructions, prices and stock.
 - [ ] Confirm whether products have colour, fabric, size or other selectable variants.
 
@@ -21,6 +22,7 @@
 ## Payments and fulfillment
 - [ ] Add Razorpay live credentials and webhook endpoint; test signature verification, duplicate webhook handling and refund reconciliation.
 - [ ] Complete Delhivery and/or ATS commercial onboarding and API access.
+- [ ] Register and verify Delhivery pickup warehouse, seller GSTIN and origin PIN; obtain official ATS API integration package if ATS is selected.
 - [ ] Configure serviceability, shipping rates, labels, pickup, cancellation and tracking.
 - [ ] Confirm which shipping provider is primary and the fallback rules.
 

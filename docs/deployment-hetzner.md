@@ -25,7 +25,7 @@ docker compose up -d
 docker compose logs -f app
 ```
 
-The application container runs Prisma migrations before starting Next.js. Check /api/health and inspect logs after startup.
+The application container runs Prisma migrations before starting Next.js. Check /api/health and inspect logs after startup.\n\nConfigure a host cron job every 10 minutes to call POST /api/cron/expire-orders with Authorization: Bearer $CRON_SECRET. This releases stock reservations for unpaid checkouts after 30 minutes. Keep the secret only in the server environment and never expose it to the browser.
 
 ## Production requirements
 - Put Caddy, Traefik or Nginx in front of the app for HTTPS and security headers.

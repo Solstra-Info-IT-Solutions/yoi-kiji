@@ -1,11 +1,48 @@
 "use client";
+
 import { useState } from "react";
 import { AddToCartButton } from "@/components/add-to-cart-button";
 import { formatINR } from "@/lib/money";
-type Variant={id:string;label:string;inventoryQty:number;pricePaise:number|null};
-export function ProductPurchase({productId,variants,hasVariants,inventoryQty,basePricePaise}:{productId:string;variants:Variant[];hasVariants:boolean;inventoryQty:number;basePricePaise:number}){
- const [selected,setSelected]=useState("");
- const active=variants.find(v=>v.id===selected);
- const unavailable=hasVariants?(!active||active.inventoryQty<1):inventoryQty<1;
- return <><p className="product-detail-price">{formatINR(active?.pricePaise??basePricePaise)}</p><p className="stock-note">{unavailable?"Currently unavailable":"Available to order"}</p>{hasVariants&&<label className="purchase-variant">Select size / option<select value={selected} onChange={e=>setSelected(e.target.value)}><option value="">Choose an option</option>{variants.map(v=><option key={v.id} value={v.id} disabled={v.inventoryQty<1}>{v.label}{v.inventoryQty<1?" — out of stock":""}</option>)}</select></label>}<AddToCartButton productId={productId} variantId={selected||undefined} disabled={unavailable}/></>;
+
+type Variant = { id: string; label: string; inventoryQty: number; pricePaise: number | null; swatchHex?: string | null };
+
+export function ProductPurchase({
+  productId, variants, hasVariants, inventoryQty, basePricePaise, onVariantChange,
+}: {
+  productId: string;
+  variants: Variant[];
+  hasVariants: boolean;
+  inventoryQty: number;
+  basePricePaise: number;
+  onVariantChange?: (variantId: string) => void;
+}) {
+  const [selected, setSelected] = useState("");
+  const active = variants.find(variant => variant.id === selected);
+  const unavailable = hasVariants ? (!active || active.inventoryQty < 1) : inventoryQty < 1;
+  function selectVariant(id: string) {
+    setSelected(id);
+    onVariantChange?.(id);
+  }
+  return <>
+    <p className="product-detail-price">{formatINR(active?.pricePaise ?? basePricePaise)}</p>
+    <p className="stock-note">{unavailable ? "Currently unavailable" : "Available to order"}</p>
+    {hasVariants && <fieldset className="purchase-variant">
+      <legend>Select size / option</legend>
+      <div className="purchase-variant-options">
+        {variants.map(variant => <button
+          key={variant.id}
+          type="button"
+          className={selected === variant.id ? "purchase-variant-option selected" : "purchase-variant-option"}
+          onClick={() => selectVariant(variant.id)}
+          disabled={variant.inventoryQty < 1}
+          aria-pressed={selected === variant.id}
+        >
+          {variant.swatchHex && <span className="purchase-variant-swatch" style={{ backgroundColor: variant.swatchHex }} aria-hidden="true" />}
+          <span>{variant.label}</span>
+          {variant.inventoryQty < 1 && <small>Out of stock</small>}
+        </button>)}
+      </div>
+    </fieldset>}
+    <AddToCartButton productId={productId} variantId={selected || undefined} disabled={unavailable} />
+  </>;
 }

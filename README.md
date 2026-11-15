@@ -18,9 +18,9 @@ A premium home-textile e-commerce platform for the YOI KIJI brand.
 - Browser cart with server-side product and price validation
 - Checkout address capture, checkout idempotency key and stock reservation
 - Razorpay order creation, checkout signature verification, webhook signature verification and payment retry
-- Customer order history and printable order summary
+- Customer order history, printable order summary and authenticated PDF order-summary download
 - Protected admin dashboard, product drafts/publishing, stock adjustment, bedsheet size variants, order status and refund controls
-- Inventory movement audit trail
+- Inventory movement audit trail and scheduled expiry of unpaid 30-minute stock reservations
 - Delhivery PIN serviceability adapter\n- Idempotent Resend order confirmation email and opt-in-only WhatsApp Cloud API notifications\n- Optional GA4 analytics gated behind explicit visitor consent
 - SEO metadata, sitemap, robots rules, PostgreSQL migrations and CI workflow
 

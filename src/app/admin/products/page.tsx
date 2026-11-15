@@ -53,7 +53,7 @@ export default async function AdminProducts() {
             attributeValues: product.attributeValues.map(value => ({ attributeId: value.attributeId, value: value.value })),
           }}/>
           <AdminProductImages productId={product.id} initialImages={product.images}/>
-          <AdminVariantForm productId={product.id} axes={axes} initialVariants={product.variants.map(v=>({id:v.id,sku:v.sku,label:v.label,inventoryQty:v.inventoryQty,pricePaise:v.pricePaise,isActive:v.isActive}))}/>
+          <AdminVariantForm productId={product.id} productSku={product.sku} axes={axes} initialVariants={product.variants.map(v=>({id:v.id,sku:v.sku,label:v.label,inventoryQty:v.inventoryQty,pricePaise:v.pricePaise,isActive:v.isActive,attributes:v.attributes}))}/>
         </div>
       </article>;
     })}</div>

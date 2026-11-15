@@ -15,6 +15,8 @@ function fail(message:string,status=400){return NextResponse.json({error:message
 export async function POST(request:NextRequest){
  const user=await getCurrentUser();if(!user)return fail("Please sign in before checkout.",401);
  const parsed=schema.safeParse(await request.json().catch(()=>null));if(!parsed.success)return fail("Please check your delivery details and bag.");
+ if(parsed.data.shippingAddress.countryCode!=="IN")return fail("International delivery is not enabled yet.",400);
+ if(!/^\\d{6}$/.test(parsed.data.shippingAddress.postalCode))return fail("Enter a valid 6-digit Indian PIN code.",400);
  const keyId=process.env.RAZORPAY_KEY_ID,secret=process.env.RAZORPAY_KEY_SECRET;
  if(!keyId||!secret)return fail("Online checkout is not activated yet. Please contact the store.",503);
  if(process.env.GST_PRICES_INCLUDE_TAX!=="true")return fail("Tax configuration is pending confirmation. Checkout will open once the seller tax treatment is approved.",503);
@@ -24,6 +26,7 @@ export async function POST(request:NextRequest){
  const shippingTaxRaw=process.env.SHIPPING_TAX_RATE_BPS;
  if(!shippingTaxRaw||!/^\d+$/.test(shippingTaxRaw)||Number(shippingTaxRaw)>10000)return fail("Shipping tax treatment is awaiting seller confirmation.",503);
  const shippingTaxRateBps=Number(shippingTaxRaw);
+ if(!process.env.SELLER_GSTIN&&shippingTaxRateBps>0)return fail("Shipping GST requires the seller GST registration details.",503);
   if(process.env.SHIPPING_DEFAULT_PROVIDER==="ATS")return fail("Amazon Shipping integration is awaiting the seller's official API credentials.",503);
   if(process.env.SHIPPING_DEFAULT_PROVIDER==="DELHIVERY"){
    try{const service=await checkDelhiveryServiceability(parsed.data.shippingAddress.postalCode);if(!service.serviceable)return fail("Delhivery does not currently service this PIN code.",400);}
@@ -41,6 +44,8 @@ export async function POST(request:NextRequest){
    if(product.hasVariants&&!variant)throw new Error("Please select an option for each product.");
    return {product,variant,quantity:item.quantity,price:variant?.pricePaise??product.pricePaise,sku:variant?.sku??product.sku,label:variant?.label??null};
   });
+  if(process.env.SELLER_GSTIN&&lineItems.some(l=>!l.product.hsnCode))return fail("A product HSN code is missing. Please contact the store.",503);
+  if(!process.env.SELLER_GSTIN&&lineItems.some(l=>l.product.gstRateBps>0))return fail("Product GST rates require the seller GST registration details.",503);
   const subtotalPaise=lineItems.reduce((s,l)=>s+l.price*l.quantity,0);
   const productTaxPaise=lineItems.reduce((s,l)=>s+calculateTaxInclusive(l.price*l.quantity,l.product.gstRateBps),0);
   const taxPaise=productTaxPaise+calculateTaxInclusive(shippingPaise,shippingTaxRateBps);

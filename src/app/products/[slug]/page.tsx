@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getActiveProductBySlug } from "@/lib/catalog";
 import { formatINR } from "@/lib/money";
+import { ProductPurchase } from "@/components/product-purchase";
 
 type Props = { params: Promise<{ slug: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -20,9 +21,8 @@ export default async function ProductPage({ params }: Props) {
       <div className="product-gallery">{product.images.length ? product.images.map(image=><img key={image.id} src={image.url} alt={image.alt}/>) : <div className="product-image-placeholder">YOI KIJI</div>}</div>
       <div className="product-detail-copy"><p className="eyebrow">{product.category?.name ?? "YOI KIJI COLLECTION"}</p><h1>{product.name}</h1><p className="product-detail-price">{formatINR(product.pricePaise)}</p><p className="product-description">{product.description}</p>
       {product.variants.length>0 && <fieldset className="variant-options"><legend>Choose an option</legend><div>{product.variants.map(v=><span key={v.id}>{v.label}</span>)}</div></fieldset>}
-      <p className="stock-note">{product.inventoryQty>0 ? "Available to order" : "Currently unavailable"}</p>
-      <button className="primary-link add-to-bag" type="button" disabled>Online ordering opening soon <span>↗</span></button>
-      <p className="product-detail-note">Secure checkout and delivery options will appear here once the store's ordering services are activated.</p>
+      <ProductPurchase productId={product.id} variants={product.variants.map(v=>({id:v.id,label:v.label,inventoryQty:v.inventoryQty,pricePaise:v.pricePaise}))} hasVariants={product.hasVariants} inventoryQty={product.inventoryQty}/>
+      <p className="product-detail-note">Prices are shown in INR. Delivery availability and charges are confirmed during checkout.</p>
       </div>
     </section>
   </main>;

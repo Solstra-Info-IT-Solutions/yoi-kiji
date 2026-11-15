@@ -15,6 +15,7 @@ export async function POST(request:NextRequest){
  const parsed=schema.safeParse(await request.json().catch(()=>null));if(!parsed.success)return fail("Please check your delivery details and bag.");
  const keyId=process.env.RAZORPAY_KEY_ID,secret=process.env.RAZORPAY_KEY_SECRET;
  if(!keyId||!secret)return fail("Online checkout is not activated yet. Please contact the store.",503);
+ if(process.env.GST_PRICES_INCLUDE_TAX!=="true")return fail("Tax configuration is pending confirmation. Checkout will open once the seller tax treatment is approved.",503);
  const shippingRaw=process.env.SHIPPING_FLAT_RATE_PAISE;
  if(!shippingRaw||!/^\d+$/.test(shippingRaw))return fail("Delivery pricing is being configured. Checkout will open shortly.",503);
  const shippingPaise=Number(shippingRaw);if(!Number.isSafeInteger(shippingPaise))return fail("Delivery pricing is not configured correctly.",503);

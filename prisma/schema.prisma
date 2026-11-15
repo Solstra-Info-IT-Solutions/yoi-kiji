@@ -31,7 +31,7 @@ enum PaymentStatus {
   REFUNDED
 }
 
-enum FulfillmentProvider {
+enum NotificationChannel {\n  EMAIL\n  WHATSAPP\n}\n\nenum NotificationStatus {\n  PENDING\n  SENDING\n  SENT\n  FAILED\n}\n\nenum FulfillmentProvider {
   DELHIVERY
   ATS
   MANUAL
@@ -211,4 +211,19 @@ model InventoryMovement {
   createdAt    DateTime        @default(now())
   @@index([productId, createdAt])
   @@index([variantId, createdAt])
+}
+
+model NotificationLog {
+  id         String              @id @default(cuid())
+  orderId    String
+  channel    NotificationChannel
+  event      String
+  status     NotificationStatus  @default(PENDING)
+  providerId String?
+  error      String?
+  order      Order               @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+  @@unique([orderId, channel, event])
+  @@index([status, createdAt])
 }

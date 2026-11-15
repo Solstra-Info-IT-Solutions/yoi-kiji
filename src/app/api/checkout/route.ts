@@ -7,6 +7,7 @@ import { calculateTaxInclusive } from "@/lib/money";
 import { checkDelhiveryServiceability } from "@/lib/shipping/delhivery";
 
 const schema=z.object({
+ checkoutKey:z.string().uuid(),
  items:z.array(z.object({productId:z.string().min(1),variantId:z.string().optional(),quantity:z.number().int().min(1).max(10)})).min(1).max(30),
  shippingAddress:z.object({fullName:z.string().min(2).max(100),phone:z.string().min(8).max(20),line1:z.string().min(4).max(180),line2:z.string().max(180).optional(),city:z.string().min(2).max(80),state:z.string().min(2).max(80),postalCode:z.string().min(5).max(10),countryCode:z.string().length(2).default("IN")})
 });
@@ -25,6 +26,8 @@ export async function POST(request:NextRequest){
    try{const service=await checkDelhiveryServiceability(parsed.data.shippingAddress.postalCode);if(!service.serviceable)return fail("Delhivery does not currently service this PIN code.",400);}
    catch{return fail("We could not confirm delivery serviceability. Please try again later.",503);}
   }
+ const existing=await prisma.order.findFirst({where:{checkoutKey:parsed.data.checkoutKey,userId:user.id},include:{payment:true}});
+ if(existing?.payment?.providerOrderId){if(existing.payment.status==="CAPTURED")return fail("This checkout has already been paid.",409);return NextResponse.json({orderId:existing.id,orderNumber:existing.orderNumber,razorpayOrderId:existing.payment.providerOrderId,amount:existing.totalPaise,currency:existing.currency,keyId});}
  const orderNumber=`YK-${randomUUID().replace(/-/g,"").slice(0,12).toUpperCase()}`;
  try{
   const products=await prisma.product.findMany({where:{id:{in:parsed.data.items.map(i=>i.productId)},isActive:true},include:{variants:{where:{isActive:true}}}});
@@ -55,7 +58,7 @@ export async function POST(request:NextRequest){
     const existingAddress=await tx.address.findFirst({where:{userId:user.id,line1:parsed.data.shippingAddress.line1,postalCode:parsed.data.shippingAddress.postalCode,phone:parsed.data.shippingAddress.phone}});
     if(!existingAddress)await tx.address.create({data:{userId:user.id,...parsed.data.shippingAddress,isDefault:!(await tx.address.count({where:{userId:user.id}}))}});
     return tx.order.create({data:{
-     orderNumber,userId:user.id,status:"PENDING",subtotalPaise,taxPaise,shippingPaise,totalPaise,
+     orderNumber,checkoutKey:parsed.data.checkoutKey,userId:user.id,status:"PENDING",subtotalPaise,taxPaise,shippingPaise,totalPaise,
      shippingAddress:parsed.data.shippingAddress,billingAddress:parsed.data.shippingAddress,
      items:{create:lineItems.map(l=>({productId:l.product.id,variantId:l.variant?.id,productName:l.product.name,variantLabel:l.label,sku:l.sku,hsnCode:l.product.hsnCode,quantity:l.quantity,unitPricePaise:l.price,gstRateBps:l.product.gstRateBps}))},
      payment:{create:{provider:"RAZORPAY",providerOrderId:gateway.id,amountPaise:totalPaise,currency:"INR",status:"CREATED"}}
@@ -63,6 +66,8 @@ export async function POST(request:NextRequest){
    });
    return NextResponse.json({orderId:order.id,orderNumber:order.orderNumber,razorpayOrderId:gateway.id,amount:totalPaise,currency:"INR",keyId});
   }catch(error){
+   const existingAfterRace=await prisma.order.findFirst({where:{checkoutKey:parsed.data.checkoutKey,userId:user.id},include:{payment:true}});
+   if(existingAfterRace?.payment?.providerOrderId)return NextResponse.json({orderId:existingAfterRace.id,orderNumber:existingAfterRace.orderNumber,razorpayOrderId:existingAfterRace.payment.providerOrderId,amount:existingAfterRace.totalPaise,currency:existingAfterRace.currency,keyId});
    await fetch(`https://api.razorpay.com/v1/orders/${gateway.id}`,{method:"GET",headers:{"Authorization":`Basic ${basic}`},cache:"no-store"}).catch(()=>null);
    return fail(error instanceof Error?error.message:"Could not reserve your items.",409);
   }

@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getActiveProductBySlug } from "@/lib/catalog";
-import { formatINR } from "@/lib/money";
 import { ProductPurchase } from "@/components/product-purchase";
 
 type Props = { params: Promise<{ slug: string }> };

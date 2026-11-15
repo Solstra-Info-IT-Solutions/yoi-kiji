@@ -50,4 +50,4 @@ Delhivery shipment manifestation is not yet enabled. The client must supply its 
 5. Apply database migrations: npm run db:migrate
 6. Start the app: npm run dev
 
-See docs/architecture.md, docs/operations.md, docs/shipping-integration.md and docs/launch-checklist.md.
+See docs/architecture.md, docs/operations.md, docs/shipping-integration.md, docs/deployment-hetzner.md and docs/launch-checklist.md.

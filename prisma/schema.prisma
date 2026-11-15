@@ -80,6 +80,7 @@ model Product {
   slug            String           @unique
   description     String           @db.Text
   sku             String           @unique
+  hsnCode         String?
   pricePaise      Int
   compareAtPaise  Int?
   currency        String           @default("INR")
@@ -161,6 +162,7 @@ model OrderItem {
   productName    String
   variantLabel   String?
   sku            String
+  hsnCode        String?
   quantity       Int
   unitPricePaise Int
   gstRateBps     Int

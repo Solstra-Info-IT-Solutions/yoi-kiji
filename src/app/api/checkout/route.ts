@@ -16,7 +16,7 @@ export async function POST(request:NextRequest){
  const user=await getCurrentUser();if(!user)return fail("Please sign in before checkout.",401);
  const parsed=schema.safeParse(await request.json().catch(()=>null));if(!parsed.success)return fail("Please check your delivery details and bag.");
  if(parsed.data.shippingAddress.countryCode!=="IN")return fail("International delivery is not enabled yet.",400);
- if(!/^\\d{6}$/.test(parsed.data.shippingAddress.postalCode))return fail("Enter a valid 6-digit Indian PIN code.",400);
+ if(!/^\d{6}$/.test(parsed.data.shippingAddress.postalCode))return fail("Enter a valid 6-digit Indian PIN code.",400);
  const keyId=process.env.RAZORPAY_KEY_ID,secret=process.env.RAZORPAY_KEY_SECRET;
  if(!keyId||!secret)return fail("Online checkout is not activated yet. Please contact the store.",503);
  if(process.env.GST_PRICES_INCLUDE_TAX!=="true")return fail("Tax configuration is pending confirmation. Checkout will open once the seller tax treatment is approved.",503);

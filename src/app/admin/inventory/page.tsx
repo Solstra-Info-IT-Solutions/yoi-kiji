@@ -1,0 +1,6 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { requireAdmin } from "@/lib/admin";
+import { prisma } from "@/lib/prisma";
+export const dynamic="force-dynamic";
+export default async function InventoryPage(){const admin=await requireAdmin();if(!admin)redirect("/login");const movements=await prisma.inventoryMovement.findMany({include:{product:{select:{name:true,sku:true}},variant:{select:{label:true,sku:true}}},orderBy:{createdAt:"desc"},take:200});return <main className="commerce-page"><div className="commerce-breadcrumb"><Link href="/admin">Admin</Link><span>/</span> Inventory</div><header className="commerce-heading"><p className="eyebrow">STOCK CONTROL / AUDIT TRAIL</p><h1>Every piece,<br/><em>accounted for.</em></h1><p>Recent stock reservations, cancellations and manual adjustments.</p></header><section className="inventory-list">{movements.map(m=><article key={m.id}><div><strong>{m.product.name}</strong><p>{m.variant?.label??m.product.sku} · {m.reason.replaceAll("_"," ").toLowerCase()}</p></div><strong className={m.quantityDelta<0?"stock-negative":"stock-positive"}>{m.quantityDelta>0?"+":""}{m.quantityDelta}</strong><time>{new Intl.DateTimeFormat("en-IN",{dateStyle:"medium",timeStyle:"short"}).format(m.createdAt)}</time></article>)}</section></main>}

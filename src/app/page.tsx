@@ -10,7 +10,8 @@ const fallbackCategories = [
 
 const bedsheetVariants = ["Single", "Double", "King", "Fitted"];
 
-export default async function HomePage() {\n  const dbCategories = (await getActiveCategories()).filter(category => category.parentId === null);\n  const imageFallbacks = Object.fromEntries(fallbackCategories.map(category => [category.slug, category.image]));\n  const categories = dbCategories.length ? dbCategories.map((category, index) => ({ number: String(index + 1).padStart(2, "0"), name: category.name, note: category.description ?? "Thoughtfully chosen textiles for the spaces you return to.", image: category.imageUrl ?? imageFallbacks[category.slug] ?? fallbackCategories[index % fallbackCategories.length].image, slug: category.slug })) : fallbackCategories;
+export default async function HomePage() {
+  const dbCategories = (await getActiveCategories()).filter(category => category.parentId === null);\n  const imageFallbacks = Object.fromEntries(fallbackCategories.map(category => [category.slug, category.image]));\n  const categories = dbCategories.length ? dbCategories.map((category, index) => ({ number: String(index + 1).padStart(2, "0"), name: category.name, note: category.description ?? "Thoughtfully chosen textiles for the spaces you return to.", image: category.imageUrl ?? imageFallbacks[category.slug] ?? fallbackCategories[index % fallbackCategories.length].image, slug: category.slug })) : fallbackCategories;
   return (
     <main>
 

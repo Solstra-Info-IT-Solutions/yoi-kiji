@@ -62,6 +62,8 @@ export async function PATCH(request: NextRequest) {
   if (!current) return NextResponse.json({ error: "Category not found." }, { status: 404 });
   if (data.parentId !== undefined && data.parentId !== null) {
     if (data.parentId === id) return NextResponse.json({ error: "A category cannot be its own parent." }, { status: 400 });
+    const selectedParent = await prisma.category.findUnique({ where: { id: data.parentId }, select: { isActive: true } });
+    if (!selectedParent || !selectedParent.isActive) return NextResponse.json({ error: "Choose an existing active parent category." }, { status: 400 });
     let cursor: string | null = data.parentId;
     const visited = new Set<string>();
     while (cursor) {

@@ -43,6 +43,20 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       }
     }
     const variant = await prisma.$transaction(async tx => {
+      if (attributes) {
+        const axes = before.product.productType?.attributes.filter(link => link.attribute.isVariantAxis) ?? [];
+        const existing = await tx.productVariant.findMany({
+          where: { productId: id, id: { not: variantId } },
+          select: { attributes: true },
+        });
+        const keyFor = (values: unknown) => {
+          if (!values || typeof values !== "object" || Array.isArray(values)) return "";
+          const record = values as Record<string, unknown>;
+          return axes.map(axis => `${axis.attribute.key}=${String(record[axis.attribute.key] ?? "")}`).join("|");
+        };
+        const requestedKey = keyFor(attributes);
+        if (existing.some(item => keyFor(item.attributes) === requestedKey)) throw new Error("DUPLICATE_VARIANT_COMBINATION");
+      }
       const updated = await tx.productVariant.update({
         where: { id: variantId },
         data: {

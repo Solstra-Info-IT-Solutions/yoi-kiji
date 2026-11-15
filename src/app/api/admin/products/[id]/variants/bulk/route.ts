@@ -96,7 +96,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     });
     return NextResponse.json({ variants: created, createdCount: created.length }, { status: 201 });
   } catch (error) {
-    const duplicate = error instanceof Error && error.message === "DUPLICATE_VARIANT_LABEL";
+    const duplicate = error instanceof Error && ["DUPLICATE_VARIANT_LABEL", "DUPLICATE_VARIANT_COMBINATION"].includes(error.message);
     return NextResponse.json({ error: duplicate ? "One or more option combinations already exist." : "Variant matrix could not be created. Check SKU and label uniqueness." }, { status: 409 });
   }
 }

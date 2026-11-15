@@ -15,7 +15,7 @@ export async function PATCH(request:NextRequest,{params}:{params:Promise<{id:str
   if(parsed.data.status==="CANCELLED"){
    for(const item of order.items){if(item.variantId)await tx.productVariant.update({where:{id:item.variantId},data:{inventoryQty:{increment:item.quantity}}});else await tx.product.update({where:{id:item.productId},data:{inventoryQty:{increment:item.quantity}}});await tx.inventoryMovement.create({data:{productId:item.productId,variantId:item.variantId,quantityDelta:item.quantity,reason:"ORDER_CANCELLED",reference:order.orderNumber,createdBy:admin.id}});}
   }
-  return tx.order.update({where:{id},data:{status:parsed.data.status}});
+  return tx.order.update({where:{id},data:{status:parsed.data.status,...(parsed.data.status==="CANCELLED"?{checkoutKey:null}:{})}});
  });
  return NextResponse.json({order:updated});
 }

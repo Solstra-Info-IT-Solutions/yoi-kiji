@@ -35,6 +35,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       if (axis.attribute.type === "SELECT" && (!Array.isArray(axis.attribute.options) || !axis.attribute.options.includes(value))) {
         return NextResponse.json({ error: `Choose a valid ${axis.attribute.name} option.` }, { status: 400 });
       }
+      if (axis.attribute.type === "NUMBER" && !Number.isFinite(Number(value))) {
+        return NextResponse.json({ error: `Enter a valid numeric ${axis.attribute.name}.` }, { status: 400 });
+      }
     }
   } else if (Object.keys(data.attributes).length) {
     return NextResponse.json({ error: "This product type has no configured variant axes." }, { status: 400 });

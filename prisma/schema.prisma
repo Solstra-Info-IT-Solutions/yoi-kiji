@@ -31,6 +31,12 @@ enum PaymentStatus {
   REFUNDED
 }
 
+enum FulfillmentProvider {
+  DELHIVERY
+  ATS
+  MANUAL
+}
+
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
@@ -69,24 +75,43 @@ model Category {
 }
 
 model Product {
-  id              String        @id @default(cuid())
+  id              String           @id @default(cuid())
   name            String
-  slug            String        @unique
-  description     String        @db.Text
-  sku             String        @unique
+  slug            String           @unique
+  description     String           @db.Text
+  sku             String           @unique
   pricePaise      Int
   compareAtPaise  Int?
-  currency        String        @default("INR")
-  gstRateBps      Int            @default(1800)
-  inventoryQty    Int            @default(0)
-  isActive        Boolean        @default(false)
+  currency        String           @default("INR")
+  gstRateBps      Int              @default(1800)
+  inventoryQty    Int              @default(0)
+  isActive        Boolean          @default(false)
+  hasVariants     Boolean          @default(false)
   categoryId      String?
-  category        Category?      @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  category        Category?        @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  variants        ProductVariant[]
   images          ProductImage[]
   orderItems      OrderItem[]
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
   @@index([categoryId, isActive])
+}
+
+model ProductVariant {
+  id              String   @id @default(cuid())
+  productId       String
+  sku             String   @unique
+  label           String
+  pricePaise      Int?
+  compareAtPaise  Int?
+  inventoryQty    Int      @default(0)
+  isActive        Boolean  @default(true)
+  attributes      Json?
+  product         Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  @@unique([productId, label])
+  @@index([productId, isActive])
 }
 
 model ProductImage {
@@ -112,6 +137,10 @@ model Order {
   currency          String      @default("INR")
   shippingAddress   Json
   billingAddress    Json
+  fulfillmentProvider FulfillmentProvider?
+  fulfillmentOrderId String?    @unique
+  trackingNumber    String?
+  trackingUrl       String?
   user              User        @relation(fields: [userId], references: [id])
   items             OrderItem[]
   payment           Payment?
@@ -125,7 +154,9 @@ model OrderItem {
   id             String  @id @default(cuid())
   orderId        String
   productId      String
+  variantId      String?
   productName    String
+  variantLabel   String?
   sku            String
   quantity       Int
   unitPricePaise Int

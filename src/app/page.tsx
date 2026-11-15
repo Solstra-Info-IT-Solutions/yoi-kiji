@@ -1,4 +1,6 @@
-const categories = [
+import { getActiveCategories } from "@/lib/catalog";
+
+const fallbackCategories = [
   { number: "01", name: "Bedsheets", note: "A softer beginning and end to every day.", image: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=1200&q=88", slug: "bedsheets" },
   { number: "02", name: "Curtains", note: "Light, filtered to feel just right.", image: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=1200&q=88", slug: "curtains" },
   { number: "03", name: "Upholstery", note: "Texture that makes a space your own.", image: "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1200&q=88", slug: "upholstery" },
@@ -8,7 +10,7 @@ const categories = [
 
 const bedsheetVariants = ["Single", "Double", "King", "Fitted"];
 
-export default function HomePage() {
+export default async function HomePage() {\n  const dbCategories = (await getActiveCategories()).filter(category => category.parentId === null);\n  const imageFallbacks = Object.fromEntries(fallbackCategories.map(category => [category.slug, category.image]));\n  const categories = dbCategories.length ? dbCategories.map((category, index) => ({ number: String(index + 1).padStart(2, "0"), name: category.name, note: category.description ?? "Thoughtfully chosen textiles for the spaces you return to.", image: category.imageUrl ?? imageFallbacks[category.slug] ?? fallbackCategories[index % fallbackCategories.length].image, slug: category.slug })) : fallbackCategories;
   return (
     <main>
 

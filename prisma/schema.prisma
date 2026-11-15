@@ -31,7 +31,19 @@ enum PaymentStatus {
   REFUNDED
 }
 
-enum NotificationChannel {\n  EMAIL\n  WHATSAPP\n}\n\nenum NotificationStatus {\n  PENDING\n  SENDING\n  SENT\n  FAILED\n}\n\nenum FulfillmentProvider {
+enum NotificationChannel {
+  EMAIL
+  WHATSAPP
+}
+
+enum NotificationStatus {
+  PENDING
+  SENDING
+  SENT
+  FAILED
+}
+
+enum FulfillmentProvider {
   DELHIVERY
   ATS
   MANUAL
@@ -157,6 +169,7 @@ model Order {
   user                User                @relation(fields: [userId], references: [id])
   items               OrderItem[]
   payment             Payment?
+  notifications       NotificationLog[]
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
   @@index([userId, createdAt])

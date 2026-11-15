@@ -1,0 +1,6 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getCurrentUser } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+export const dynamic="force-dynamic";
+export default async function AddressesPage(){const user=await getCurrentUser();if(!user)redirect("/login");const addresses=await prisma.address.findMany({where:{userId:user.id},orderBy:{createdAt:"desc"}});return <main className="commerce-page"><div className="commerce-breadcrumb"><Link href="/account">Account</Link><span>/</span> Addresses</div><header className="commerce-heading"><p className="eyebrow">YOUR DETAILS</p><h1>Places that<br/><em>feel like home.</em></h1></header>{addresses.length?<section className="address-list">{addresses.map(a=><article key={a.id}><strong>{a.fullName}</strong><p>{a.line1} {a.line2}</p><p>{a.city}, {a.state} {a.postalCode}</p><p>{a.phone}</p>{a.isDefault&&<span className="order-status">Default</span>}</article>)}</section>:<section className="catalogue-empty"><h2>No saved addresses yet.</h2><p>Your delivery address will be saved during checkout after your first order.</p><Link className="primary-link" href="/shop">Explore collections <span>↗</span></Link></section>}</main>}

@@ -5,6 +5,7 @@ A premium home-textile commerce platform with a deep-green visual identity and c
 ## Client-approved brand direction
 - Primary brand green: `#0E300E`
 - Off-white: `#E9E9E9`
+- Primary typeface: Montserrat Light (weight 300); supporting weights 400–600 for hierarchy
 - Product categories: Bedsheets, Curtains, Upholstery, Bath Linen, Kitchen Linen.
 - Bedsheet variant labels: Single, Double, King, Fitted.
 - Proposed payment provider: Razorpay.

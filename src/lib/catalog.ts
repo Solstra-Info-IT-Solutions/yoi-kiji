@@ -58,7 +58,7 @@ export async function getActiveProducts(categorySlug?: string) {
         ] } : {}),
       },
       include: {
-        images: { orderBy: { position: "asc" }, take: 1 },
+        images: { where: { variantId: null }, orderBy: [{ isPrimary: "desc" }, { position: "asc" }], take: 1 },
         category: true,
         categoryLinks: { include: { category: true } },
         variants: { where: { isActive: true }, orderBy: { label: "asc" } },

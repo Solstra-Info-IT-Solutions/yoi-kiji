@@ -190,6 +190,9 @@ model Payment {
   amountPaise           Int
   currency              String        @default("INR")
   webhookEventId        String?       @unique
+  refundId              String?       @unique
+  refundStatus          String?
+  refundAmountPaise     Int?
   order                 Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
   createdAt             DateTime      @default(now())
   updatedAt             DateTime      @updatedAt

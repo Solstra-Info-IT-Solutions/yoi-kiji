@@ -16,11 +16,14 @@ ON "ProductImage"("productId", "variantId", "position");
 CREATE INDEX "ProductImage_productId_isPrimary_idx"
 ON "ProductImage"("productId", "isPrimary");
 
+WITH ranked AS (
+  SELECT "id", ROW_NUMBER() OVER (
+    PARTITION BY "productId", "variantId"
+    ORDER BY "position" ASC, "id" ASC
+  ) AS rank
+  FROM "ProductImage"
+)
 UPDATE "ProductImage" AS image
 SET "isPrimary" = true
-WHERE image."position" = (
-  SELECT MIN(candidate."position")
-  FROM "ProductImage" AS candidate
-  WHERE candidate."productId" = image."productId"
-    AND candidate."variantId" IS NULL
-);
+FROM ranked
+WHERE ranked."id" = image."id" AND ranked.rank = 1;

@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
 type CategoryOption = { id: string; name: string; slug: string; parentId: string | null; isActive: boolean };
-type DynamicAttribute = { id: string; isRequired: boolean; isFilterable: boolean; attribute: { id: string; name: string; key: string; type: string; unit: string | null; options: unknown } };
+type DynamicAttribute = { id: string; isRequired: boolean; isFilterable: boolean; attribute: { id: string; name: string; key: string; type: string; unit: string | null; options: unknown; isVariantAxis: boolean } };
 type ProductTypeOption = { id: string; name: string; slug: string; attributes: DynamicAttribute[] };
 type AttributeValue = { attributeId: string; value: unknown };
 type EditableProduct = {

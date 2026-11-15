@@ -84,7 +84,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
       <p>{products.length} {products.length === 1 ? "piece" : "pieces"}</p>
       <form method="get" className="catalogue-sort">
         {Object.entries(activeFilters).flatMap(([key, values]) => values.map(value => <input key={key + value} type="hidden" name={`f_${key}`} value={value}/>))}
-        <label>Sort by <select name="sort" defaultValue={sort} onChange="this.form.submit()"><option value="newest">Newest</option><option value="price-asc">Price: low to high</option><option value="price-desc">Price: high to low</option><option value="name">Name</option></select></label>
+        <label>Sort by <select name="sort" defaultValue={sort}><option value="newest">Newest</option><option value="price-asc">Price: low to high</option><option value="price-desc">Price: high to low</option><option value="name">Name</option></select></label><button type="submit">Sort</button>
       </form>
     </div>
     {facets.length > 0 && <form method="get" className="catalogue-filters">

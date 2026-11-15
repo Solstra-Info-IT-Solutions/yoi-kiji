@@ -21,7 +21,7 @@ A premium home-textile e-commerce platform for the YOI KIJI brand.
 - Customer order history and printable order summary
 - Protected admin dashboard, product drafts/publishing, stock adjustment, bedsheet size variants, order status and refund controls
 - Inventory movement audit trail
-- Delhivery PIN serviceability adapter
+- Delhivery PIN serviceability adapter\n- Idempotent Resend order confirmation email and opt-in-only WhatsApp Cloud API notifications
 - SEO metadata, sitemap, robots rules, PostgreSQL migrations and CI workflow
 
 ## Important launch gates

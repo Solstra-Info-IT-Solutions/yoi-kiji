@@ -14,7 +14,12 @@ export default async function ProductPage({ params }: Props) {
   const { slug } = await params;
   const product = await getActiveProductBySlug(slug);
   if (!product) notFound();
-  const dynamicSpecs = product.attributeValues.map(entry => {\n    const value = entry.value;\n    const formatted = Array.isArray(value) ? value.join(", ") : typeof value === "boolean" ? (value ? "Yes" : "No") : typeof value === "object" && value !== null ? JSON.stringify(value) : String(value);\n    return { name: entry.attribute.name, value: entry.attribute.unit ? `${formatted} ${entry.attribute.unit}` : formatted };\n  });\n  return <main className="commerce-page">
+  const dynamicSpecs = product.attributeValues.map(entry => {
+    const value = entry.value;
+    const formatted = Array.isArray(value) ? value.join(", ") : typeof value === "boolean" ? (value ? "Yes" : "No") : typeof value === "object" && value !== null ? JSON.stringify(value) : String(value);
+    return { name: entry.attribute.name, value: entry.attribute.unit ? `${formatted} ${entry.attribute.unit}` : formatted };
+  });
+  return <main className="commerce-page">
     <div className="commerce-breadcrumb"><Link href="/">Home</Link><span>/</span><Link href="/shop">Shop</Link><span>/</span>{product.name}</div>
     <section className="product-detail">
       <div className="product-gallery">{product.images.length ? product.images.map(image=><img key={image.id} src={image.url} alt={image.alt}/>) : <div className="product-image-placeholder">YOI KIJI</div>}</div>

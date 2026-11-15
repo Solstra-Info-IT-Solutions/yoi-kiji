@@ -14,7 +14,16 @@ export async function POST(request:NextRequest){
  if(!payment)return NextResponse.json({received:true});
  if((eventId&&payment.webhookEventId===eventId)||payment.status==="CAPTURED")return NextResponse.json({received:true,duplicate:true});
  if(event.event==="payment.captured"||event.event==="order.paid"){
-  await prisma.$transaction([prisma.payment.update({where:{id:payment.id},data:{status:"CAPTURED",providerPaymentId:paymentId??undefined,webhookEventId:eventId??undefined}}),prisma.order.update({where:{id:payment.orderId},data:{status:"CONFIRMED"}})]);
+  if(payment.order.status==="CANCELLED"){
+   const keyId=process.env.RAZORPAY_KEY_ID,apiSecret=process.env.RAZORPAY_KEY_SECRET;
+   if(!keyId||!apiSecret||!paymentId)return NextResponse.json({error:"Late payment requires manual refund."},{status:503});
+   const auth=Buffer.from(keyId+":"+apiSecret).toString("base64");
+   const refundResponse=await fetch("https://api.razorpay.com/v1/payments/"+paymentId+"/refund",{method:"POST",headers:{Authorization:"Basic "+auth,"Content-Type":"application/json"},body:JSON.stringify({amount:payment.amountPaise,receipt:"late-"+payment.order.orderNumber}),cache:"no-store"});
+   if(!refundResponse.ok)return NextResponse.json({error:"Automatic refund of a late payment failed; reconciliation required."},{status:503});
+   await prisma.$transaction([prisma.payment.update({where:{id:payment.id},data:{status:"REFUNDED",providerPaymentId:paymentId,webhookEventId:eventId??undefined}}),prisma.order.update({where:{id:payment.orderId},data:{status:"REFUNDED"}})]);
+  }else{
+   await prisma.$transaction([prisma.payment.update({where:{id:payment.id},data:{status:"CAPTURED",providerPaymentId:paymentId??undefined,webhookEventId:eventId??undefined}}),prisma.order.update({where:{id:payment.orderId},data:{status:"CONFIRMED"}})]);
+  }
  }else if(event.event==="payment.failed"){
   // A failed attempt does not release reserved stock: the same Razorpay order may be retried.
   await prisma.payment.update({where:{id:payment.id},data:{status:"FAILED",providerPaymentId:paymentId??undefined,webhookEventId:eventId??undefined}});

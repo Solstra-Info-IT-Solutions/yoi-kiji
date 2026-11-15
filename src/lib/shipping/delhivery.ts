@@ -1,4 +1,5 @@
 export type DelhiveryServiceability={serviceable:boolean;prepaid:boolean;cod:boolean;raw:unknown};
+function enabled(value:unknown){return value===true||value===1||["Y","YES","TRUE","1"].includes(String(value??"").toUpperCase());}
 export async function checkDelhiveryServiceability(pin:string):Promise<DelhiveryServiceability>{
  const token=process.env.DELHIVERY_API_TOKEN;
  const base=(process.env.DELHIVERY_API_BASE_URL??"").replace(/\/$/,"");
@@ -11,7 +12,7 @@ export async function checkDelhiveryServiceability(pin:string):Promise<Delhivery
  const entry=records.find((item:any)=>String(item?.postal_code?.pin??item?.pin??item?.pincode??"")===pin)??records[0];
  if(!entry)return {serviceable:false,prepaid:false,cod:false,raw};
  const postal=entry.postal_code??entry;
- const prepaid=Boolean(postal.pre_paid??postal.prepaid??postal.is_prepaid);
- const cod=Boolean(postal.cod??postal.is_cod);
+ const prepaid=enabled(postal.pre_paid??postal.prepaid??postal.is_prepaid);
+ const cod=enabled(postal.cod??postal.is_cod);
  return {serviceable:prepaid||cod,prepaid,cod,raw};
 }

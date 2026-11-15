@@ -80,7 +80,11 @@ export async function getActiveProductBySlug(slug: string) {
         images: { orderBy: { position: "asc" } },
         category: true,
         categoryLinks: { include: { category: true } },
-        variants: { where: { isActive: true }, orderBy: { label: "asc" } },
+        variants: {
+          where: { isActive: true },
+          orderBy: { label: "asc" },
+          include: { images: { orderBy: [{ isPrimary: "desc" }, { position: "asc" }] } },
+        },
         attributeValues: { include: { attribute: true } },
         productType: true,
       },

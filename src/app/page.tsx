@@ -1,5 +1,3 @@
-import { SiteHeader } from "@/components/site-header";
-
 const categories = [
   { number: "01", name: "Bedsheets", note: "A softer beginning and end to every day.", image: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=1200&q=88", slug: "bedsheets" },
   { number: "02", name: "Curtains", note: "Light, filtered to feel just right.", image: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=1200&q=88", slug: "curtains" },
@@ -13,8 +11,6 @@ const bedsheetVariants = ["Single", "Double", "King", "Fitted"];
 export default function HomePage() {
   return (
     <main>
-      <div className="announcement"><span>TEXTILES FOR THE WAY YOU LIVE</span><i>✳</i><span>COMFORT, CONSIDERED</span></div>
-      <SiteHeader/>
 
       <section className="hero">
         <div className="hero-photo" role="img" aria-label="Beautifully layered bed linen in a calm, natural bedroom">
@@ -52,7 +48,7 @@ export default function HomePage() {
 
       <section className="journal"><div><p className="eyebrow">NOTES ON MAKING A HOME</p><h2>Live well.<br/><em>Feel at home.</em></h2></div><p>Ideas, care notes and inspiration for choosing, styling and living with textiles you love.</p><a className="text-link" href="/journal">Read the journal <span>↗</span></a></section>
 
-      <footer><div className="footer-top"><div><a className="wordmark footer-wordmark" href="/">YOI KIJI</a><p>Textiles for the way you live.</p></div><div className="footer-links"><a href="/shop">Shop all</a><a href="/our-story">Our story</a><a href="/contact">Contact</a><a href="/shipping">Shipping & returns</a></div><a className="back-top" href="#">BACK TO TOP ↑</a></div><div className="footer-bottom"><span>© {new Date().getFullYear()} YOI KIJI</span><span>COMFORT, CONSIDERED.</span><div><a href="/privacy">Privacy</a><a href="/terms">Terms</a></div></div></footer>
+
     </main>
   );
 }

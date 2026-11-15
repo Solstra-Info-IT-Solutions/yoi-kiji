@@ -49,7 +49,7 @@ export function AdminProductForm() {
     const options=Array.isArray(attr.options)?attr.options.filter((x):x is string=>typeof x==="string"):[];
     if(attr.type==="BOOLEAN")return <label key={attr.id} className="admin-dynamic-attribute"><span><input type="checkbox" checked={current===true} onChange={e=>setAttribute(attr.id,e.target.checked)}/> {label}</span></label>;
     if(attr.type==="SELECT")return <label key={attr.id}>{label}<select required={link.isRequired} value={typeof current==="string"?current:""} onChange={e=>setAttribute(attr.id,e.target.value)}><option value="">Choose…</option>{options.map(option=><option key={option}>{option}</option>)}</select></label>;
-    if(attr.type==="MULTI_SELECT")return <label key={attr.id}>{label}<select multiple value={Array.isArray(current)?current:[]} onChange={e=>setAttribute(attr.id,Array.from(e.target.selectedOptions).map(o=>o.value))}>{options.map(option=><option key={option}>{option}</option>)}</select></label>;
+    if(attr.type==="MULTI_SELECT")return <label key={attr.id}>{label}<select required={link.isRequired} multiple value={Array.isArray(current)?current:[]} onChange={e=>setAttribute(attr.id,Array.from(e.target.selectedOptions).map(o=>o.value))}>{options.map(option=><option key={option}>{option}</option>)}</select></label>;
     return <label key={attr.id}>{label}<input required={link.isRequired} type={attr.type==="NUMBER"?"number":attr.type==="DATE"?"date":"text"} value={typeof current==="string"||typeof current==="number"?String(current):""} onChange={e=>setAttribute(attr.id,e.target.value)} /></label>;
   }
   return <section className="admin-create">
@@ -58,7 +58,7 @@ export function AdminProductForm() {
       <label>Product name<input required value={form.name} onChange={e=>set("name",e.target.value)}/></label>
       <label>URL slug<input required pattern="[a-z0-9-]+" value={form.slug} onChange={e=>set("slug",e.target.value)}/></label>
       <label>SKU<input required value={form.sku} onChange={e=>set("sku",e.target.value)}/></label>
-      <label>Product type<select value={form.productTypeId} onChange={e=>{set("productTypeId",e.target.value);setAttributeValues({});}}><option value="">Choose product type…</option>{productTypes.map(type=><option key={type.id} value={type.id}>{type.name}</option>)}</select></label>
+      <label>Product type<select value={form.productTypeId} onChange={e=>{const id=e.target.value;set("productTypeId",id);const type=productTypes.find(item=>item.id===id);setAttributeValues(Object.fromEntries((type?.attributes??[]).filter(link=>link.attribute.type==="BOOLEAN").map(link=>[link.attribute.id,false])));}}><option value="">Choose product type…</option>{productTypes.map(type=><option key={type.id} value={type.id}>{type.name}</option>)}</select></label>
       <label>Category<select required value={form.categoryId} onChange={e=>set("categoryId",e.target.value)}><option value="">Choose category</option>{categories.map(c=><option key={c.id} value={c.id}>{c.name} · /{c.slug}</option>)}</select></label>
       <label>HSN code<input value={form.hsnCode} onChange={e=>set("hsnCode",e.target.value)}/></label>
       <label>Material<input value={form.material} onChange={e=>set("material",e.target.value)}/></label>

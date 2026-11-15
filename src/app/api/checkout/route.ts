@@ -50,6 +50,7 @@ export async function POST(request:NextRequest){
       ? await tx.productVariant.updateMany({where:{id:line.variant.id,inventoryQty:{gte:line.quantity},isActive:true},data:{inventoryQty:{decrement:line.quantity}}})
       : await tx.product.updateMany({where:{id:line.product.id,inventoryQty:{gte:line.quantity},isActive:true},data:{inventoryQty:{decrement:line.quantity}}});
      if(result.count!==1)throw new Error(`Insufficient stock for ${line.product.name}.`);
+     await tx.inventoryMovement.create({data:{productId:line.product.id,variantId:line.variant?.id,quantityDelta:-line.quantity,reason:"ORDER_RESERVATION",reference:orderNumber,createdBy:user.id}});
     }
     return tx.order.create({data:{
      orderNumber,userId:user.id,status:"PENDING",subtotalPaise,taxPaise,shippingPaise,totalPaise,

@@ -2,7 +2,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 
-export function AuthForm({ mode }: { mode: "login" | "register" }) {
+export function AuthForm({ mode,redirectTo="/account" }: { mode: "login" | "register";redirectTo?:string }) {
   const [name,setName]=useState("");
   const [email,setEmail]=useState("");
   const [password,setPassword]=useState("");
@@ -15,7 +15,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
       const response=await fetch(`/api/auth/${mode==="register"?"register":"login"}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name,email,password})});
       const data=await response.json();
       if(!response.ok) throw new Error(data.error ?? "Unable to continue.");
-      router.push("/account"); router.refresh();
+      router.push(redirectTo); router.refresh();
     } catch(e) { setError(e instanceof Error?e.message:"Something went wrong."); }
     finally { setBusy(false); }
   }

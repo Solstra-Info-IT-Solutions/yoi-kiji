@@ -1,4 +1,4 @@
-import { PrismaClient, ProductAttributeType } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -88,7 +88,7 @@ async function main() {
         where: { key: field.key },
         update: {
           name: field.name,
-          type: field.type as ProductAttributeType,
+          type: field.type,
           unit: "unit" in field ? field.unit : null,
           options: "options" in field ? field.options : undefined,
           isFilterable: "filterable" in field ? Boolean(field.filterable) : false,
@@ -98,7 +98,7 @@ async function main() {
         create: {
           name: field.name,
           key: field.key,
-          type: field.type as ProductAttributeType,
+          type: field.type,
           unit: "unit" in field ? field.unit : null,
           options: "options" in field ? field.options : undefined,
           isFilterable: "filterable" in field ? Boolean(field.filterable) : false,

@@ -20,7 +20,6 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/yoikiji?schema=public
           DIRECT_URL: postgresql://postgres:postgres@localhost:5432/yoikiji?schema=public
-          DIRECT_URL: postgresql://postgres:postgres@localhost:5432/yoikiji?schema=public
       - run: npx prisma validate
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/yoikiji?schema=public

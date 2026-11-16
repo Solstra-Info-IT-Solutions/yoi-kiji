@@ -52,7 +52,7 @@ Never expose server secrets with a `NEXT_PUBLIC_` prefix.
 1. Confirm the Neon production database and verify both connection URLs.
 2. Set the production environment variables in Vercel.
 3. From a trusted local environment or CI job configured with the production `DIRECT_URL`, run `npm run db:deploy` to apply committed Prisma migrations.
-4. Verify the migration status and test database connectivity.
+4. Run `npx prisma migrate status` and verify the migration status and database connectivity.
 5. Deploy the merged `main` branch to Vercel.
 6. Verify homepage, product/category pages, customer authentication, admin authentication, cart, checkout, payment webhooks, media signing, and the order-expiry cron endpoint.
 7. Configure the custom domain and HTTPS, then update Razorpay webhook URLs and allowed callback URLs.

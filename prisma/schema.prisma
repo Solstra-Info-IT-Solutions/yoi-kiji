@@ -94,6 +94,7 @@ model User {
   reviews Review[]
   wishlistItems WishlistItem[]
   passwordResetTokens PasswordResetToken[]
+  authoredBlogPosts BlogPost[]
 }
 
 model Address {
@@ -174,6 +175,7 @@ model Product {
   reviews Review[]
   wishlistItems WishlistItem[]
   stockAlerts StockAlert[]
+  relatedBlogPosts BlogPostProduct[]
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   @@index([categoryId, isActive])
@@ -519,4 +521,86 @@ model PasswordResetRequestLog {
   createdAt DateTime @default(now())
   @@index([emailHash, createdAt])
   @@index([ipHash, createdAt])
+}
+
+
+enum BlogPostStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHED
+  ARCHIVED
+}
+
+model BlogPost {
+  id              String          @id @default(cuid())
+  title           String
+  slug            String          @unique
+  excerpt         String?         @db.Text
+  contentMarkdown String          @db.Text
+  coverImageUrl   String?
+  coverImageAlt   String?
+  seoTitle        String?
+  seoDescription  String?         @db.Text
+  canonicalUrl    String?
+  noIndex         Boolean         @default(false)
+  status          BlogPostStatus  @default(DRAFT)
+  publishedAt     DateTime?
+  scheduledAt     DateTime?
+  authorId        String?
+  author          User?           @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  categories      BlogPostCategory[]
+  tags            BlogPostTag[]
+  relatedProducts BlogPostProduct[]
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  @@index([status, publishedAt])
+  @@index([status, scheduledAt])
+  @@index([authorId, updatedAt])
+}
+
+model BlogCategory {
+  id          String              @id @default(cuid())
+  name        String
+  slug        String              @unique
+  description String?             @db.Text
+  posts       BlogPostCategory[]
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+}
+
+model BlogTag {
+  id        String          @id @default(cuid())
+  name      String
+  slug      String          @unique
+  posts     BlogPostTag[]
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+}
+
+model BlogPostCategory {
+  postId     String
+  categoryId String
+  post       BlogPost     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  category   BlogCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  @@id([postId, categoryId])
+  @@index([categoryId])
+}
+
+model BlogPostTag {
+  postId String
+  tagId  String
+  post   BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag    BlogTag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  @@id([postId, tagId])
+  @@index([tagId])
+}
+
+model BlogPostProduct {
+  postId    String
+  productId String
+  sortOrder Int      @default(0)
+  post      BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  @@id([postId, productId])
+  @@index([productId])
 }

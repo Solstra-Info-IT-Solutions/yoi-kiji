@@ -22,3 +22,11 @@ export async function POST(request:NextRequest){
  try{const asset=await prisma.mediaAsset.create({data:{publicId:d.publicId,secureUrl:d.secureUrl,resourceType:d.resourceType,format:d.format.toLowerCase(),bytes:d.bytes,width:d.width??null,height:d.height??null,durationSeconds:d.duration??null,originalFilename:d.originalFilename??null,folderId:d.folderId??null,title:d.title??null,altText:d.altText??null,tags:d.tags,uploaderId:admin.id}});return NextResponse.json({asset},{status:201});}
  catch(error){if((error as {code?:string})?.code==="P2002")return NextResponse.json({error:"This uploaded asset is already registered."},{status:409});throw error;}
 }
+
+export async function PATCH(request:NextRequest){
+ const admin=await authorised();if(!admin)return NextResponse.json({error:"Administrator permission required."},{status:403});
+ const parsed=z.object({id:z.string().min(1),title:z.string().max(160).nullable().optional(),altText:z.string().max(300).nullable().optional(),folderId:z.string().min(1).nullable().optional(),tags:z.array(z.string().trim().min(1).max(40)).max(20).optional()}).safeParse(await request.json().catch(()=>null));
+ if(!parsed.success)return NextResponse.json({error:"Invalid media metadata.",details:parsed.error.flatten()},{status:400});
+ const {id,...data}=parsed.data;if(data.folderId&&!await prisma.mediaFolder.findUnique({where:{id:data.folderId},select:{id:true}}))return NextResponse.json({error:"Media folder not found."},{status:404});
+ const asset=await prisma.mediaAsset.update({where:{id},data});return NextResponse.json({asset});
+}

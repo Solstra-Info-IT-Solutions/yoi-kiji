@@ -8,7 +8,7 @@ export function AdminMediaLibrary() {
  useEffect(()=>{load().catch(e=>setError(e.message));},[load]);
  async function makeFolder(){const name=window.prompt("New folder name");if(!name)return;const r=await fetch("/api/admin/media/folders",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name})});const d=await r.json();if(!r.ok){setError(d.error);return;}setFolderId(d.folder.id);await load();}
  async function upload(file:File){setBusy(true);setError("");setMessage("");try{
-  const resourceType=file.type.startsWith("image/")?"IMAGE":file.type.startsWith("video/")?"VIDEO":(file.type.startsWith("audio/")||file.type==="application/pdf")?"RAW":null;
+  const resourceType=file.type.startsWith("image/")?"IMAGE":(file.type.startsWith("video/")||file.type.startsWith("audio/"))?"VIDEO":file.type==="application/pdf"?"RAW":null;
   if(!resourceType)throw new Error("Choose an image, video, audio file or PDF.");
   const limit=resourceType==="IMAGE"?25:resourceType==="VIDEO"?200:50;if(file.size>limit*1024*1024)throw new Error("File exceeds the "+limit+" MB limit.");
   const signed=await fetch("/api/admin/media/library-sign",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({resourceType,folderId:folderId||null})});const s=await signed.json();if(!signed.ok)throw new Error(s.error||"Could not prepare upload.");
@@ -31,7 +31,7 @@ export function AdminMediaLibrary() {
   <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(190px,1fr))",gap:16}}>
    {assets.map(a=><article key={a.id} style={{border:"1px solid #d8d8d0",padding:10,minWidth:0}}>
     <div style={{aspectRatio:"4/3",background:"#efefe9",display:"grid",placeItems:"center",overflow:"hidden"}}>
-     {a.resourceType==="IMAGE"?<img src={a.secureUrl} alt={a.altText||a.title||"Media asset"} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:a.resourceType==="VIDEO"?<video src={a.secureUrl} controls preload="metadata" style={{width:"100%",height:"100%",objectFit:"contain"}}/>:<a href={a.secureUrl} target="_blank" rel="noreferrer">Open {a.format.toUpperCase()}</a>}
+     {a.resourceType==="IMAGE"?<img src={a.secureUrl} alt={a.altText||a.title||"Media asset"} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:a.resourceType==="VIDEO"&&["mp3","wav","m4a","aac","ogg"].includes(a.format.toLowerCase())?<audio src={a.secureUrl} controls style={{width:"90%"}}/>:a.resourceType==="VIDEO"?<video src={a.secureUrl} controls preload="metadata" style={{width:"100%",height:"100%",objectFit:"contain"}}/>:<a href={a.secureUrl} target="_blank" rel="noreferrer">Open {a.format.toUpperCase()}</a>}
     </div>
     <strong style={{display:"block",marginTop:10,overflowWrap:"anywhere"}}>{a.title||a.originalFilename||"Media asset"}</strong>
     <small>{a.format.toUpperCase()} · {size(a.bytes)}{a.width&&a.height?" · "+a.width+"×"+a.height:""}</small>

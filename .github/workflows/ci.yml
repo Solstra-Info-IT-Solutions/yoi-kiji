@@ -19,13 +19,16 @@ jobs:
       - run: npx prisma generate
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/yoikiji?schema=public
+          DIRECT_URL: postgresql://postgres:postgres@localhost:5432/yoikiji?schema=public
       - run: npx prisma validate
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/yoikiji?schema=public
+          DIRECT_URL: postgresql://postgres:postgres@localhost:5432/yoikiji?schema=public
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/yoikiji?schema=public
+          DIRECT_URL: postgresql://postgres:postgres@localhost:5432/yoikiji?schema=public
           APP_SECRET: ci-only-secret-with-at-least-32-characters
           NEXT_PUBLIC_SITE_URL: https://example.invalid

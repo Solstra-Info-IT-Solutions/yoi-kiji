@@ -95,6 +95,11 @@ model User {
   wishlistItems WishlistItem[]
   passwordResetTokens PasswordResetToken[]
   authoredBlogPosts BlogPost[]
+  mediaAssets MediaAsset[] @relation("MediaUploader")
+  customerNotes CustomerNote[] @relation("CustomerNotes")
+  authoredCustomerNotes CustomerNote[] @relation("CustomerNoteAuthor")
+  customerTagAssignments CustomerTagAssignment[]
+  customerActivities CustomerActivity[]
 }
 
 model Address {
@@ -603,4 +608,88 @@ model BlogPostProduct {
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   @@id([postId, productId])
   @@index([productId])
+}
+
+
+enum MediaResourceType {
+  IMAGE
+  VIDEO
+  RAW
+}
+
+model MediaFolder {
+  id        String        @id @default(cuid())
+  name      String
+  slug      String        @unique
+  assets    MediaAsset[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  @@index([name])
+}
+
+model MediaAsset {
+  id               String            @id @default(cuid())
+  folderId         String?
+  uploaderId       String?
+  publicId         String            @unique
+  secureUrl        String            @db.Text
+  resourceType     MediaResourceType @default(IMAGE)
+  format           String
+  originalFilename String?
+  altText          String?
+  title            String?
+  bytes            Int
+  width            Int?
+  height           Int?
+  durationSeconds  Float?
+  tags             String[]          @default([])
+  folder           MediaFolder?      @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  uploader         User?              @relation("MediaUploader", fields: [uploaderId], references: [id], onDelete: SetNull)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  @@index([folderId, createdAt])
+  @@index([resourceType, createdAt])
+}
+
+model CustomerNote {
+  id        String   @id @default(cuid())
+  userId    String
+  authorId  String?
+  body      String   @db.Text
+  user      User     @relation("CustomerNotes", fields: [userId], references: [id], onDelete: Cascade)
+  author    User?    @relation("CustomerNoteAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([userId, createdAt])
+}
+
+model CustomerTag {
+  id          String                  @id @default(cuid())
+  name        String                  @unique
+  color       String                  @default("#0e300e")
+  assignments CustomerTagAssignment[]
+  createdAt   DateTime                @default(now())
+  @@index([name])
+}
+
+model CustomerTagAssignment {
+  userId     String
+  tagId      String
+  assignedAt DateTime   @default(now())
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tag        CustomerTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  @@id([userId, tagId])
+  @@index([tagId, assignedAt])
+}
+
+model CustomerActivity {
+  id        String   @id @default(cuid())
+  userId    String
+  actorId   String?
+  type      String
+  summary   String   @db.Text
+  metadata  Json?
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  @@index([userId, createdAt])
 }

@@ -17,6 +17,7 @@ export async function SiteHeader() {
         </div>;
       })}
       <Link href="/our-story">Our story</Link>
+      <Link href="/journal">Journal</Link>
     </nav>
     <div className="header-actions"><Link href="/search" aria-label="Search">Search</Link><Link href="/account">Account</Link><Link className="bag-link" href="/cart">Bag <CartCount/></Link></div>
   </header>;

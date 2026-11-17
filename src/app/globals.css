@@ -437,3 +437,36 @@ footer{font-size:14px}
 .password-recovery-form button:disabled{opacity:.55;cursor:wait}
 .password-recovery-feedback{padding:.9rem 1rem;background:#e5e9df;border-left:3px solid #385c46;color:#102f20;line-height:1.6}
 .password-recovery-back{display:inline-block;margin-top:1.5rem;color:#385c46;text-decoration:underline;text-underline-offset:4px}
+
+
+/* Customer order tracking */
+.order-tracking-layout{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(280px,.75fr);gap:clamp(1.5rem,4vw,4rem);margin:2rem 0}
+.order-tracking-main,.order-tracking-side>section{padding:clamp(1.2rem,3vw,2rem);background:#f2f0e9;color:#102f20}
+.order-tracking-summary{display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;padding-bottom:1.4rem;border-bottom:1px solid rgba(16,47,32,.18)}
+.order-tracking-summary h2{margin:.5rem 0 0;font-family:var(--serif);font-size:clamp(1.8rem,4vw,2.8rem);font-weight:400;text-transform:capitalize}
+.order-tracking-summary>strong{font-size:1.2rem}
+.order-tracking-timeline{list-style:none;margin:2rem 0 0;padding:0}
+.order-tracking-timeline li{position:relative;display:grid;grid-template-columns:42px minmax(0,1fr);gap:1rem;min-height:112px}
+.order-tracking-timeline li:not(:last-child):before{content:"";position:absolute;left:20px;top:42px;bottom:0;width:1px;background:rgba(16,47,32,.2)}
+.order-tracking-marker{z-index:1;display:grid;place-items:center;width:42px;height:42px;border:1px solid rgba(16,47,32,.3);border-radius:50%;background:#f2f0e9;font-size:12px}
+.order-tracking-timeline .is-complete .order-tracking-marker{background:#0e300e;color:#e9e9e9;border-color:#0e300e}
+.order-tracking-timeline h3,.order-tracking-side h3,.order-tracking-carrier h3{margin:0 0 .45rem;font-size:1rem}
+.order-tracking-timeline p,.order-tracking-side p,.order-tracking-carrier p{margin:.2rem 0;color:#59685b;font-size:14px;line-height:1.6}
+.order-tracking-timeline small{display:inline-block;margin-top:.45rem;color:#315c3a;font-weight:700}
+.order-tracking-terminal{margin-top:1.5rem;padding:1.2rem;background:#e5e9df}
+.order-tracking-terminal h3{margin:0 0 .5rem}
+.order-tracking-terminal p{margin:0;line-height:1.6}
+.order-tracking-carrier{margin-top:1.5rem;padding:1.25rem;border:1px solid rgba(16,47,32,.2)}
+.order-tracking-carrier p{display:flex;justify-content:space-between;gap:1rem;padding:.4rem 0}
+.order-tracking-carrier p span{color:#59685b}
+.order-tracking-carrier .primary-link{display:inline-flex;margin-top:.8rem}
+.order-tracking-side{display:grid;align-content:start;gap:1rem}
+.order-tracking-side>section{padding:1.35rem}
+.order-tracking-side>section+section{border-top:1px solid rgba(16,47,32,.15)}
+.order-tracking-item{display:flex;justify-content:space-between;gap:1rem;padding:.9rem 0;border-top:1px solid rgba(16,47,32,.12)}
+.order-tracking-item:first-of-type{margin-top:.8rem}
+.order-tracking-item strong{font-size:14px}
+.order-tracking-item small{color:#59685b}
+.order-tracking-back{margin:2rem 0;color:inherit;font-size:14px}
+.order-tracking-back a{text-underline-offset:4px}
+@media(max-width:760px){.order-tracking-layout{grid-template-columns:1fr}.order-tracking-summary{align-items:flex-start;flex-direction:column}.order-tracking-carrier p{align-items:flex-start;flex-direction:column}}

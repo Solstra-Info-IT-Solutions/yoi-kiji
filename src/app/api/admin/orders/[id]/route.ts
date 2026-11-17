@@ -10,6 +10,7 @@ export async function PATCH(request:NextRequest,{params}:{params:Promise<{id:str
  const allowed:Record<string,string[]>={CONFIRMED:["PROCESSING"],PROCESSING:["SHIPPED"],SHIPPED:["DELIVERED"],PENDING:["CANCELLED"]};
  if(parsed.data.status==="CANCELLED"&&order.status==="PROCESSING")allowed.PROCESSING=["SHIPPED"];
  if(!allowed[order.status]?.includes(parsed.data.status))return NextResponse.json({error:`Cannot change order from ${order.status} to ${parsed.data.status}.`},{status:409});
+ if(parsed.data.status==="SHIPPED"&&(!order.fulfillmentProvider||!order.trackingNumber?.trim()))return NextResponse.json({error:"Add the shipping provider and tracking / AWB number before marking this order as shipped."},{status:409});
  if(parsed.data.status==="CANCELLED"&&order.payment?.status==="CAPTURED")return NextResponse.json({error:"This order has been paid. Issue a Razorpay refund before cancelling it."},{status:409});
  const updated=await prisma.$transaction(async tx=>{
   if(parsed.data.status==="CANCELLED"){

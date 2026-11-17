@@ -8,6 +8,7 @@ import { AdminProductEditForm } from "@/components/admin-product-edit-form";
 import { AdminProductRow } from "@/components/admin-product-row";
 import { AdminVariantForm } from "@/components/admin-variant-form";
 import { AdminProductImages } from "@/components/admin-product-images";
+import { AdminProductCsvTools } from "@/components/admin-product-csv-tools";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +32,7 @@ export default async function AdminProducts() {
     <div className="commerce-breadcrumb"><Link href="/admin">Admin</Link><span>/</span> Products</div>
     <header className="commerce-heading"><p className="eyebrow">CATALOGUE MANAGEMENT</p><h1>Products,<br/><em>beautifully presented.</em></h1><p>Review product visibility, pricing and inventory.</p></header>
     <AdminProductForm />
+    <AdminProductCsvTools />
     <div className="admin-product-list">{products.map(product => {
       const axes = product.productType?.attributes.filter(link => link.attribute.isVariantAxis).map(link => ({
         id: link.attribute.id, key: link.attribute.key, name: link.attribute.name,

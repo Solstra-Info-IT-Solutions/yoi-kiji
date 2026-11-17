@@ -8,6 +8,7 @@ import { checkDelhiveryServiceability } from "@/lib/shipping/delhivery";
 
 const schema=z.object({
  checkoutKey:z.string().uuid(),
+ couponCode:z.string().trim().min(3).max(32).optional(),
  items:z.array(z.object({productId:z.string().min(1),variantId:z.string().optional(),quantity:z.number().int().min(1).max(10)})).min(1).max(30),
  shippingAddress:z.object({fullName:z.string().min(2).max(100),phone:z.string().min(8).max(20),line1:z.string().min(4).max(180),line2:z.string().max(180).optional(),city:z.string().min(2).max(80),state:z.string().min(2).max(80),postalCode:z.string().min(5).max(10),countryCode:z.string().length(2).default("IN")})
 });
@@ -48,8 +49,21 @@ export async function POST(request:NextRequest){
   if(!process.env.SELLER_GSTIN&&lineItems.some(l=>l.product.gstRateBps>0))return fail("Product GST rates require the seller GST registration details.",503);
   const subtotalPaise=lineItems.reduce((s,l)=>s+l.price*l.quantity,0);
   const productTaxPaise=lineItems.reduce((s,l)=>s+calculateTaxInclusive(l.price*l.quantity,l.product.gstRateBps),0);
-  const taxPaise=productTaxPaise+calculateTaxInclusive(shippingPaise,shippingTaxRateBps);
-  const totalPaise=subtotalPaise+shippingPaise;
+  let coupon: { id: string; code: string; discountType: "PERCENTAGE" | "FIXED_AMOUNT"; discountValue: number; maximumDiscountPaise: number | null; usageLimit: number | null; usageCount: number; minimumSubtotalPaise: number; startsAt: Date | null; endsAt: Date | null; isActive: boolean } | null = null;
+  let discountPaise=0;
+  const couponCode=parsed.data.couponCode?.trim().toUpperCase();
+  if(couponCode){
+   coupon=await prisma.coupon.findUnique({where:{code:couponCode}});
+   const now=new Date();
+   if(!coupon||!coupon.isActive||(coupon.startsAt&&coupon.startsAt>now)||(coupon.endsAt&&coupon.endsAt<now)||(coupon.usageLimit!==null&&coupon.usageCount>=coupon.usageLimit))return fail("This promotion code is invalid, expired or no longer available.",400);
+   if(subtotalPaise<coupon.minimumSubtotalPaise)return fail("Your bag does not meet the minimum order value for this promotion.",400);
+   discountPaise=coupon.discountType==="PERCENTAGE"?Math.floor(subtotalPaise*coupon.discountValue/10000):coupon.discountValue;
+   if(coupon.maximumDiscountPaise!==null)discountPaise=Math.min(discountPaise,coupon.maximumDiscountPaise);
+   discountPaise=Math.min(discountPaise,subtotalPaise);
+  }
+  const discountTaxPaise=subtotalPaise>0?Math.round(productTaxPaise*discountPaise/subtotalPaise):0;
+  const taxPaise=productTaxPaise-discountTaxPaise+calculateTaxInclusive(shippingPaise,shippingTaxRateBps);
+  const totalPaise=subtotalPaise+shippingPaise-discountPaise;
   if(!Number.isSafeInteger(totalPaise)||totalPaise<100)return fail("The order total is invalid.");
   const basic=Buffer.from(`${keyId}:${secret}`).toString("base64");
   const gatewayResponse=await fetch("https://api.razorpay.com/v1/orders",{method:"POST",headers:{"Authorization":`Basic ${basic}`,"Content-Type":"application/json"},body:JSON.stringify({amount:totalPaise,currency:"INR",receipt:orderNumber,notes:{customerId:user.id}}),cache:"no-store"});
@@ -72,6 +86,12 @@ export async function POST(request:NextRequest){
      items:{create:lineItems.map(l=>({productId:l.product.id,variantId:l.variant?.id,productName:l.product.name,variantLabel:l.label,sku:l.sku,hsnCode:l.product.hsnCode,quantity:l.quantity,unitPricePaise:l.price,gstRateBps:l.product.gstRateBps}))},
      payment:{create:{provider:"RAZORPAY",providerOrderId:gateway.id,amountPaise:totalPaise,currency:"INR",status:"CREATED"}}
     }});
+    if(coupon){
+     const reserved=await tx.coupon.updateMany({where:{id:coupon.id,isActive:true,...(coupon.usageLimit!==null?{usageCount:{lt:coupon.usageLimit}}:{})},data:{usageCount:{increment:1}}});
+     if(reserved.count!==1)throw new Error("This promotion has just reached its usage limit.");
+     await tx.couponRedemption.create({data:{couponId:coupon.id,orderId:order.id,userId:user.id,discountPaise}});
+    }
+    return order;
    });
    return NextResponse.json({orderId:order.id,orderNumber:order.orderNumber,razorpayOrderId:gateway.id,amount:totalPaise,currency:"INR",keyId});
   }catch(error){

@@ -9,7 +9,7 @@ export const metadata = { title: "YOI KIJI · Operations" };
 
 const navigation = [
   { title: "Catalogue", description: "Products, collections and product specifications", links: [{ label: "Products", href: "/admin/products" }, { label: "Categories", href: "/admin/categories" }, { label: "Product types & attributes", href: "/admin/product-types" }] },
-  { title: "Fulfilment", description: "Orders, stock movement and fulfilment operations", links: [{ label: "Orders", href: "/admin/orders" }, { label: "Inventory ledger", href: "/admin/inventory" }] },
+  { title: "Fulfilment", description: "Orders, stock movement and fulfilment operations", links: [{ label: "Orders", href: "/admin/orders" }, { label: "Inventory ledger", href: "/admin/inventory" }, { label: "Back-in-stock alerts", href: "/admin/stock-alerts" }] },
   { title: "Storefront", description: "Homepage storytelling and product merchandising", links: [{ label: "Content studio", href: "/admin/storefront" }, { label: "Categories", href: "/admin/categories" }, { label: "Products", href: "/admin/products" }] },
   { title: "Growth", description: "Promotions and customer relationships", links: [{ label: "Promotions & coupons", href: "/admin/promotions" }, { label: "Customer intelligence", href: "/admin/customers" }, { label: "Reviews & social proof", href: "/admin/reviews" }] },
 ];

@@ -50,6 +50,14 @@ enum FulfillmentProvider {
   MANUAL
 }
 
+enum StockAlertStatus {
+  PENDING
+  SENDING
+  SENT
+  FAILED
+  CANCELLED
+}
+
 enum ReviewStatus {
   PENDING
   APPROVED
@@ -158,6 +166,7 @@ model Product {
   collectionLinks StoreCollectionProduct[]
   reviews Review[]
   wishlistItems WishlistItem[]
+  stockAlerts StockAlert[]
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   @@index([categoryId, isActive])
@@ -465,4 +474,20 @@ model WishlistItem {
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   @@unique([userId, productId])
   @@index([userId, createdAt])
+}
+
+
+model StockAlert {
+  id          String           @id @default(cuid())
+  productId   String
+  email       String
+  status      StockAlertStatus @default(PENDING)
+  providerId  String?
+  error       String?          @db.Text
+  createdAt   DateTime         @default(now())
+  sentAt      DateTime?
+  product     Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
+  @@unique([productId, email])
+  @@index([status, createdAt])
+  @@index([productId, status])
 }

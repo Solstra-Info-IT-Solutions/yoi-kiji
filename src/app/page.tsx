@@ -1,4 +1,4 @@
-import { getActiveCategories } from "@/lib/catalog";
+import { getActiveCategories } from "@/lib/catalog";\nimport { prisma } from "@/lib/prisma";
 
 const fallbackCategories = [
   { number: "01", name: "Bedsheets", note: "A softer beginning and end to every day.", image: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=1400&q=90", slug: "bedsheets" },
@@ -9,7 +9,14 @@ const fallbackCategories = [
 ];
 
 export default async function HomePage() {
-  const dbCategories = (await getActiveCategories()).filter(category => category.parentId === null);
+  const [categoryRecords, homepageSections, collectionRecords] = await Promise.all([
+    getActiveCategories(),
+    prisma.homepageSection.findMany({ where: { isActive: true }, orderBy: { position: "asc" } }),
+    prisma.storeCollection.findMany({ where: { isActive: true }, orderBy: [{ sortOrder: "asc" }, { name: "asc" }] }),
+  ]);
+  const dbCategories = categoryRecords.filter(category => category.parentId === null);
+  const section = (key: string) => homepageSections.find(item => item.key === key);
+  const hero = section("hero"), intro = section("intro"), feature = section("feature"), manifesto = section("manifesto"), journal = section("journal");
   const imageFallbacks = Object.fromEntries(fallbackCategories.map(category => [category.slug, category.image]));
   const categories = dbCategories.length
     ? dbCategories.map((category, index) => ({
@@ -24,7 +31,7 @@ export default async function HomePage() {
   return (
     <main className="home-redesign">
       <section className="editorial-hero" aria-label="YOI KIJI home textiles">
-        <div className="editorial-hero__image" />
+        <div className="editorial-hero__image" style={hero?.imageUrl ? { backgroundImage: `url("${hero.imageUrl}")` } : undefined} />
         <div className="editorial-hero__shade" />
         <div className="editorial-hero__topline">
           <span>YOI KIJI — THE ART OF TEXTILE LIVING</span>
@@ -44,7 +51,7 @@ export default async function HomePage() {
       </section>
 
       <section className="editorial-intro">
-        <div className="editorial-intro__label"><span>THE YOI KIJI PHILOSOPHY</span><span>01 — A SENSE OF HOME</span></div>
+        <div className="editorial-intro__label"><span>{intro?.eyebrow ?? "THE YOI KIJI PHILOSOPHY"}</span><span>01 — A SENSE OF HOME</span></div>
         <div className="editorial-intro__grid">
           <h2>Beauty lives in<br />the <em>everyday.</em></h2>
           <div>
@@ -73,7 +80,7 @@ export default async function HomePage() {
       </section>
 
       <section className="editorial-feature">
-        <div className="editorial-feature__image" role="img" aria-label="Softly layered natural bed linen in a sunlit bedroom" />
+        <div className="editorial-feature__image" role="img" aria-label={feature?.imageAlt ?? "Softly layered natural bed linen in a sunlit bedroom"} style={feature?.imageUrl ? { backgroundImage: `url("${feature.imageUrl}")` } : undefined} />
         <div className="editorial-feature__copy">
           <p className="editorial-eyebrow"><span /> THE BEDDING EDIT</p>
           <h2>Rest, in<br /><em>your own way.</em></h2>
@@ -85,7 +92,7 @@ export default async function HomePage() {
 
       <section className="editorial-manifesto">
         <span className="editorial-manifesto__flower">✳</span>
-        <p>Not more things.<br />Just more <em>meaning</em> in the things we keep.</p>
+        <p>{manifesto?.title ?? <>Not more things.<br/>Just more <em>meaning</em> in the things we keep.</>}</p>
         <span className="editorial-manifesto__jp">日々を、心地よく。</span>
       </section>
 

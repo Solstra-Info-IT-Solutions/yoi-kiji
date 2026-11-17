@@ -385,3 +385,42 @@ footer{font-size:14px}
   .commerce-page :is(p,li,label,input,select,textarea,button,td,th,small){font-size:14px}
   .commerce-page :is(input,select,textarea){min-height:48px}
 }
+
+
+/* Admin content studio, promotion controls and customer intelligence */
+.admin-content-workspace{display:grid;gap:2rem;margin:2.5rem 0}
+.admin-content-panel{padding:clamp(1.1rem,3vw,2rem);background:#f2f0e9;color:#102f20;border:1px solid rgba(16,47,32,.18)}
+.admin-content-panel .admin-section-heading{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;flex-wrap:wrap;margin-bottom:1rem}
+.admin-content-panel .admin-section-heading h2{font-family:var(--serif);font-size:clamp(30px,4vw,44px);font-weight:400;margin:0}
+.admin-content-panel .admin-section-heading span,.admin-helper{font-size:13px;color:#647465}
+.admin-content-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;margin:1.5rem 0}
+.admin-content-form label,.customer-filter-bar label{display:grid;gap:.4rem;font-size:14px;font-weight:600}
+.admin-content-form .wide{grid-column:1/-1}
+.admin-content-form input,.admin-content-form textarea,.admin-content-form select,.customer-filter-bar input,.customer-filter-bar select{width:100%;min-width:0;border:1px solid rgba(16,47,32,.3);background:#fff;color:#102f20;padding:.8rem;font:inherit;font-size:14px}
+.admin-content-form select[multiple]{min-height:150px}
+.admin-content-form button,.admin-content-list button{min-height:44px;padding:.65rem 1rem;border:1px solid #102f20;background:#102f20;color:#f2f0e9;font:inherit;font-size:13px;cursor:pointer}
+.admin-content-form button:disabled{opacity:.55;cursor:wait}
+.admin-content-list{display:grid;margin-top:1.5rem;border-top:1px solid rgba(16,47,32,.18)}
+.admin-content-list article{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1rem 0;border-bottom:1px solid rgba(16,47,32,.15)}
+.admin-content-list article>div{min-width:0;flex:1}
+.admin-content-list strong{font-size:15px}
+.admin-content-list p{margin:.2rem 0;font-size:13px;overflow-wrap:anywhere}
+.admin-content-list small{font-size:12px;color:#647465}
+.admin-content-list button{min-height:36px;padding:.45rem .65rem;background:transparent;color:#102f20}
+.admin-feedback{padding:1rem;border:1px solid rgba(16,47,32,.25);background:#f2f0e9;color:#102f20}
+.admin-helper{line-height:1.6}
+.checkout-coupon{display:grid;gap:.5rem;margin:1.2rem 0;font-size:14px;font-weight:600}
+.checkout-coupon input{width:100%;max-width:360px;padding:.8rem;border:1px solid rgba(16,47,32,.35);background:transparent;color:inherit;font:inherit}
+.customer-insights{margin:2rem 0}
+.customer-insights .admin-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1rem}
+.customer-insights .admin-stats article{padding:1.25rem;background:#f2f0e9;color:#102f20}
+.customer-insights .admin-stats article span,.customer-insights .admin-stats article small{display:block;font-size:13px}
+.customer-insights .admin-stats article strong{display:block;margin:.5rem 0;font-size:clamp(22px,3vw,32px)}
+.customer-filter-bar{display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,.7fr) auto;gap:1rem;align-items:end;margin:2rem 0}
+.customer-filter-bar>span{font-size:13px;white-space:nowrap;padding-bottom:.8rem}
+.customer-insights .admin-customer-list{display:grid;gap:.6rem}
+.customer-insights .order-card{display:grid;grid-template-columns:1.2fr 1fr auto;align-items:center;gap:1rem;padding:1.2rem;background:#f2f0e9;color:#102f20}
+.customer-insights .order-card p,.customer-insights .order-card small{font-size:13px}
+.customer-insights .order-status{display:inline-block;padding:.35rem .6rem;border:1px solid rgba(16,47,32,.25);font-size:12px}
+@media(max-width:760px){.customer-insights .admin-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.customer-filter-bar{grid-template-columns:1fr}.customer-insights .order-card{grid-template-columns:1fr}.admin-content-list article{align-items:flex-start;flex-wrap:wrap}}
+@media(max-width:560px){.admin-content-form{grid-template-columns:1fr}.admin-content-form .wide{grid-column:auto}.customer-insights .admin-stats{grid-template-columns:1fr 1fr}}

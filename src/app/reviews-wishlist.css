@@ -44,3 +44,27 @@
 .shop-results-count{font-size:13px;color:#aab8a8;margin:1rem 0}
 @media(max-width:900px){.shop-filter-form{grid-template-columns:repeat(3,minmax(0,1fr))}.shop-filter-form label:first-child{grid-column:span 2}}
 @media(max-width:560px){.shop-filter-form{grid-template-columns:repeat(2,minmax(0,1fr))}.shop-filter-form label:first-child{grid-column:1/-1}.shop-filter-form button,.shop-filter-form>a{justify-self:start}.admin-review-filters{align-items:flex-start;flex-direction:column}}
+
+
+.back-in-stock-form{margin:1.2rem 0;padding:1.2rem;background:#f2f0e9;color:#102f20;max-width:560px}
+.back-in-stock-form h3{font-family:var(--serif);font-size:28px;font-weight:400;margin:.25rem 0}
+.back-in-stock-form>p:not(.eyebrow){font-size:13px;line-height:1.6}
+.back-in-stock-form label{display:block;margin:.8rem 0 .35rem;font-size:12px;font-weight:600}
+.back-in-stock-form>div{display:flex;gap:.5rem}
+.back-in-stock-form input{min-width:0;flex:1;padding:.75rem;border:1px solid rgba(16,47,32,.3);background:white;color:#102f20;font:inherit}
+.back-in-stock-form button,.admin-stock-alert-actions button{padding:.7rem .9rem;border:1px solid #102f20;background:#102f20;color:#f2f0e9;font:inherit;font-size:13px;cursor:pointer}
+.back-in-stock-form button:disabled,.admin-stock-alert-actions button:disabled{opacity:.6;cursor:wait}
+.back-in-stock-form small{display:block;margin-top:.65rem;font-size:12px}
+.related-products{margin:4rem 0}
+.related-products__heading{margin-bottom:1.5rem}
+.related-products__heading h2{font-family:var(--serif);font-size:clamp(30px,5vw,48px);font-weight:400;margin:0}
+.admin-stock-alerts{display:grid;gap:.8rem;margin:2rem 0}
+.admin-stock-alerts__summary{display:flex;align-items:baseline;gap:.7rem;padding:1.2rem;background:#f2f0e9;color:#102f20}
+.admin-stock-alerts__summary strong{font-size:28px}
+.admin-stock-alerts__summary span{font-size:13px}
+.admin-stock-alerts>article{display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:1.2rem;background:#f2f0e9;color:#102f20}
+.admin-stock-alerts>article p{margin:.3rem 0;font-size:14px}
+.admin-stock-alerts>article small{display:block;margin-top:.25rem;font-size:12px;color:#647465}
+.admin-stock-alert-error{color:#a33224!important}
+.admin-stock-alert-actions{display:grid;justify-items:end;gap:.5rem}
+@media(max-width:600px){.back-in-stock-form>div,.admin-stock-alerts>article{align-items:stretch;flex-direction:column}.admin-stock-alert-actions{justify-items:start}}

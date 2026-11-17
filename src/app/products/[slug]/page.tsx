@@ -52,7 +52,8 @@ export default async function ProductPage({ params }: Props) {
       basePricePaise={product.pricePaise}
     >
       <p className="eyebrow">{product.category?.name ?? "YOI KIJI COLLECTION"}</p>
-      <h1>{product.name}</h1>\n      <WishlistButton productId={product.id}/>
+      <h1>{product.name}</h1>
+      <WishlistButton productId={product.id}/>
       {(product.hasVariants?product.variants.every(v=>v.inventoryQty<=0):product.inventoryQty<=0)&&<BackInStockForm productId={product.id}/>}
       <p className="product-description">{product.description}</p>
       {(product.material || product.color || product.careInstructions || product.lengthMm || product.widthMm || product.heightMm || dynamicSpecs.length > 0) && <dl className="product-specs">

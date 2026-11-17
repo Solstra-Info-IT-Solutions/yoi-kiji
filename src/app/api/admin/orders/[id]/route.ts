@@ -2,6 +2,7 @@ import { NextRequest,NextResponse } from "next/server";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/admin";
 import { prisma } from "@/lib/prisma";
+import { sendOrderStatusUpdate } from "@/lib/notifications";
 const schema=z.object({status:z.enum(["PROCESSING","SHIPPED","DELIVERED","CANCELLED"])});
 export async function PATCH(request:NextRequest,{params}:{params:Promise<{id:string}>}){
  const admin=await requireAdmin();if(!admin)return NextResponse.json({error:"Forbidden"},{status:403});
@@ -18,5 +19,8 @@ export async function PATCH(request:NextRequest,{params}:{params:Promise<{id:str
   }
   return tx.order.update({where:{id},data:{status:parsed.data.status,...(parsed.data.status==="CANCELLED"?{checkoutKey:null}:{})}});
  });
+ if(["PROCESSING","SHIPPED","DELIVERED","CANCELLED"].includes(parsed.data.status)){
+  await sendOrderStatusUpdate(id,parsed.data.status).catch(()=>({sent:false,reason:"Notification could not be sent."}));
+ }
  return NextResponse.json({order:updated});
 }

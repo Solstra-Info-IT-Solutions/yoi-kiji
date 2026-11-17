@@ -10,7 +10,10 @@ const MAX_ROWS = 500;
 const headers = ["name","slug","description","sku","categorySlug","hsnCode","material","color","careInstructions","weightGrams","lengthMm","widthMm","heightMm","pricePaise","compareAtPaise","gstRateBps","inventoryQty","isActive","imageUrl","imageAlt"] as const;
 const optionalText = (value: string) => value.trim() || undefined;
 const numberField = (value: string, label: string, row: number, required = false) => {
-  if (!value.trim() && !required) return undefined;
+  if (!value.trim()) {
+    if (required) throw new Error(`Row ${row}: ${label} is required.`);
+    return undefined;
+  }
   const number = Number(value);
   if (!Number.isSafeInteger(number)) throw new Error(`Row ${row}: ${label} must be a whole number.`);
   return number;
@@ -70,6 +73,8 @@ export async function POST(request: NextRequest) {
       seenSkus.add(sku); seenSlugs.add(slug);
       const category = await prisma.category.findUnique({ where: { slug: String(values.categorySlug) }, select: { id: true, isActive: true } });
       if (!category?.isActive) throw new Error("Category slug does not match an active category.");
+      const activeText = String(values.isActive).toLowerCase();
+      if (!["true", "false", "1", "0", "yes", "no"].includes(activeText)) throw new Error("isActive must be true, false, 1, 0, yes or no.");
       const parsed = productSchema.safeParse({
         name: values.name, slug, description: values.description, sku,
         hsnCode: optionalText(values.hsnCode), material: optionalText(values.material), color: optionalText(values.color),
@@ -82,16 +87,17 @@ export async function POST(request: NextRequest) {
         compareAtPaise: numberField(values.compareAtPaise, "compareAtPaise", rowNumber),
         gstRateBps: numberField(values.gstRateBps, "gstRateBps", rowNumber) ?? 0,
         inventoryQty: numberField(values.inventoryQty, "inventoryQty", rowNumber, true),
-        isActive: ["true","1","yes"].includes(String(values.isActive).toLowerCase()),
+        isActive: ["true","1","yes"].includes(activeText),
         imageUrl: optionalText(values.imageUrl), imageAlt: optionalText(values.imageAlt),
       });
       if (!parsed.success) throw new Error(parsed.error.issues.map(issue => `${issue.path.join(".")}: ${issue.message}`).join("; "));
+      const { imageUrl, imageAlt, ...productData } = parsed.data;
       await prisma.$transaction(async tx => {
         const created = await tx.product.create({
           data: {
-            ...parsed.data, categoryId: category.id,
+            ...productData, categoryId: category.id,
             categoryLinks: { create: { categoryId: category.id, isPrimary: true } },
-            images: parsed.data.imageUrl ? { create: { url: parsed.data.imageUrl, alt: parsed.data.imageAlt ?? parsed.data.name } } : undefined,
+            images: imageUrl ? { create: { url: imageUrl, alt: imageAlt ?? productData.name } } : undefined,
           },
         });
         if (created.inventoryQty > 0) await tx.inventoryMovement.create({

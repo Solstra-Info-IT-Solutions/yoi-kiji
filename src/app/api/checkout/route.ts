@@ -4,6 +4,7 @@ import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { calculateTaxInclusive } from "@/lib/money";
+import { calculateCouponDiscount } from "@/lib/promotions";
 import { checkDelhiveryServiceability } from "@/lib/shipping/delhivery";
 
 const schema=z.object({
@@ -57,9 +58,7 @@ export async function POST(request:NextRequest){
    const now=new Date();
    if(!coupon||!coupon.isActive||(coupon.startsAt&&coupon.startsAt>now)||(coupon.endsAt&&coupon.endsAt<now)||(coupon.usageLimit!==null&&coupon.usageCount>=coupon.usageLimit))return fail("This promotion code is invalid, expired or no longer available.",400);
    if(subtotalPaise<coupon.minimumSubtotalPaise)return fail("Your bag does not meet the minimum order value for this promotion.",400);
-   discountPaise=coupon.discountType==="PERCENTAGE"?Math.floor(subtotalPaise*coupon.discountValue/10000):coupon.discountValue;
-   if(coupon.maximumDiscountPaise!==null)discountPaise=Math.min(discountPaise,coupon.maximumDiscountPaise);
-   discountPaise=Math.min(discountPaise,subtotalPaise);
+   discountPaise=calculateCouponDiscount(subtotalPaise,coupon.discountType,coupon.discountValue,coupon.maximumDiscountPaise);
   }
   const appliedCoupon=coupon;
   const customerId=user.id;

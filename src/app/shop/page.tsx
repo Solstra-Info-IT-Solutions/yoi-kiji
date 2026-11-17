@@ -1,3 +1,4 @@
+import "../reviews-wishlist.css";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getActiveCategories,getActiveProducts } from "@/lib/catalog";

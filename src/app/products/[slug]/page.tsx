@@ -59,5 +59,13 @@ export default async function ProductPage({ params }: Props) {
         {dynamicSpecs.map(spec => <div key={spec.name}><dt>{spec.name}</dt><dd>{spec.value}</dd></div>)}
       </dl>}
     </ProductDetailInteractive>
+    <ProductReviewSection
+      slug={product.slug}
+      reviews={reviews.map(review=>({id:review.id,rating:review.rating,title:review.title,body:review.body,verifiedPurchase:review.verifiedPurchase,createdAt:review.createdAt.toISOString(),userName:review.user.name??"YOI KIJI customer"}))}
+      averageRating={reviewSummary._avg.rating??0}
+      reviewCount={reviewSummary._count._all}
+      canReview={!!eligiblePurchase}
+      isSignedIn={!!user}
+    />
   </main>;
 }

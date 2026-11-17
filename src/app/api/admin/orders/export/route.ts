@@ -4,7 +4,8 @@ import { prisma } from "@/lib/prisma";
 
 function csv(value: unknown) {
   const text = value === null || value === undefined ? "" : String(value);
-  return '"' + text.replace(/"/g, '""') + '"';
+  const safe = /^[=+\-@\t\r]/.test(text) ? "'" + text : text;
+  return '"' + safe.replace(/"/g, '""') + '"';
 }
 export async function GET(request: NextRequest) {
   const admin = await requireAdmin();

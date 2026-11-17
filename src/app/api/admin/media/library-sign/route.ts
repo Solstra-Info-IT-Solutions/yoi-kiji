@@ -12,7 +12,7 @@ export async function POST(request:NextRequest){
  const cloudName=process.env.CLOUDINARY_CLOUD_NAME,apiKey=process.env.CLOUDINARY_API_KEY,apiSecret=process.env.CLOUDINARY_API_SECRET;
  if(!cloudName||!apiKey||!apiSecret)return NextResponse.json({error:"Media storage is not configured. Set the Cloudinary server credentials."},{status:503});
  const timestamp=Math.floor(Date.now()/1000).toString(),folder="yoi-kiji/library",publicId=randomUUID();
- const formats=parsed.data.resourceType==="IMAGE"?"jpg,jpeg,png,webp,avif,gif":parsed.data.resourceType==="VIDEO"?"mp4,webm,mov,m4v":"mp3,wav,m4a,aac,ogg,pdf";
+ const formats=parsed.data.resourceType==="IMAGE"?"jpg,jpeg,png,webp,avif,gif":parsed.data.resourceType==="VIDEO"?"mp4,webm,mov,m4v,mp3,wav,m4a,aac,ogg":"mp3,wav,m4a,aac,ogg,pdf";
  const params={allowed_formats:formats,folder,overwrite:"false",public_id:publicId,timestamp};
  return NextResponse.json({cloudName,apiKey,timestamp,folder,publicId,resourceType:parsed.data.resourceType.toLowerCase(),folderId:parsed.data.folderId??null,allowedFormats:formats,signature:signUpload(params,apiSecret)});
 }

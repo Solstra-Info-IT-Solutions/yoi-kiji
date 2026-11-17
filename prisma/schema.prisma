@@ -83,6 +83,7 @@ model User {
   email        String   @unique
   name         String?
   passwordHash String?
+  sessionVersion Int @default(0)
   whatsappOptIn Boolean @default(false)
   role         UserRole @default(CUSTOMER)
   createdAt    DateTime @default(now())
@@ -92,6 +93,7 @@ model User {
   couponRedemptions CouponRedemption[]
   reviews Review[]
   wishlistItems WishlistItem[]
+  passwordResetTokens PasswordResetToken[]
 }
 
 model Address {
@@ -495,4 +497,26 @@ model StockAlert {
   @@unique([productId, email])
   @@index([status, createdAt])
   @@index([productId, status])
+}
+
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId, createdAt])
+  @@index([expiresAt, usedAt])
+}
+
+model PasswordResetRequestLog {
+  id        String   @id @default(cuid())
+  emailHash String
+  ipHash    String
+  createdAt DateTime @default(now())
+  @@index([emailHash, createdAt])
+  @@index([ipHash, createdAt])
 }

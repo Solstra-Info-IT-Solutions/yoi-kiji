@@ -32,7 +32,9 @@ function sign(payload: string) {
 }
 
 export async function createSession(userId: string) {
-  const payload = Buffer.from(JSON.stringify({ sub: userId, exp: Math.floor(Date.now()/1000) + SESSION_SECONDS })).toString("base64url");
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { sessionVersion: true } });
+  if (!user) throw new Error("Cannot create a session for a missing user.");
+  const payload = Buffer.from(JSON.stringify({ sub: userId, sv: user.sessionVersion, exp: Math.floor(Date.now()/1000) + SESSION_SECONDS })).toString("base64url");
   const jar = await cookies();
   jar.set(COOKIE_NAME, `${payload}.${sign(payload)}`, {
     httpOnly: true,
@@ -58,9 +60,12 @@ export async function getCurrentUser() {
   const received = Buffer.from(signature);
   if (expected.length !== received.length || !timingSafeEqual(expected, received)) return null;
   try {
-    const data = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as { sub: string; exp: number };
+    const data = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as { sub: string; sv?: number; exp: number };
     if (!data.sub || data.exp < Math.floor(Date.now()/1000)) return null;
-    return await prisma.user.findUnique({ where: { id: data.sub }, select: { id: true, email: true, name: true, role: true, whatsappOptIn: true } });
+    const user = await prisma.user.findUnique({ where: { id: data.sub }, select: { id: true, email: true, name: true, role: true, whatsappOptIn: true, sessionVersion: true } });
+    if (!user || (data.sv ?? 0) !== user.sessionVersion) return null;
+    const { sessionVersion: _sessionVersion, ...safeUser } = user;
+    return safeUser;
   } catch {
     return null;
   }

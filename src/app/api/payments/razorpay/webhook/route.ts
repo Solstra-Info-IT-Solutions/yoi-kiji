@@ -35,7 +35,21 @@ export async function POST(request:NextRequest){
    const refundData=await refundResponse.json();const processed=refundData.status==="processed";
    await prisma.$transaction([prisma.payment.update({where:{id:payment.id},data:{status:processed?"REFUNDED":"CAPTURED",providerPaymentId:paymentId,webhookEventId:eventId??undefined,refundId:refundData.id,refundStatus:refundData.status,refundAmountPaise:refundData.amount}}),...(processed?[prisma.order.update({where:{id:payment.orderId},data:{status:"REFUNDED"}})]:[])]);
   }else{
-   await prisma.$transaction([prisma.payment.update({where:{id:payment.id},data:{status:"CAPTURED",providerPaymentId:paymentId??undefined,webhookEventId:eventId??undefined}}),prisma.order.update({where:{id:payment.orderId},data:{status:"CONFIRMED"}})]);
+   const transition=await prisma.$transaction(async tx=>{
+    const claimed=await tx.order.updateMany({where:{id:payment.orderId,status:"PENDING"},data:{status:"CONFIRMED"}});
+    if(claimed.count!==1){
+     const current=await tx.order.findUnique({where:{id:payment.orderId},select:{status:true,payment:{select:{status:true}}}});
+     if(current?.status==="CANCELLED")return "CANCELLED";
+     if(current?.status==="CONFIRMED"&&current.payment?.status==="CAPTURED")return "CONFIRMED";
+     return "UNCHANGED";
+    }
+    await tx.payment.update({where:{id:payment.id},data:{status:"CAPTURED",providerPaymentId:paymentId??undefined,webhookEventId:eventId??undefined}});
+    return "CONFIRMED";
+   });
+   // Ask Razorpay to retry when expiry won the race. The retry enters the
+   // cancelled-order branch above and performs the late-payment refund.
+   if(transition==="CANCELLED")return NextResponse.json({error:"Order expired during payment confirmation; retry required for refund reconciliation."},{status:503});
+   if(transition==="UNCHANGED")return NextResponse.json({error:"Order state changed during payment confirmation; reconciliation required."},{status:503});
    await Promise.allSettled([sendOrderConfirmation(payment.orderId),sendWhatsAppOrderConfirmation(payment.orderId)]);
   }
  }else if(event.event==="payment.failed"){

@@ -11,13 +11,20 @@ export async function POST(request:NextRequest){
  for(const order of expired){
   await prisma.$transaction(async tx=>{
    const current=await tx.order.findUnique({where:{id:order.id},include:{payment:true,items:true}});
-   if(!current||current.status!=="PENDING"||!current.reservationExpiresAt||current.reservationExpiresAt.getTime()>Date.now()||current.payment?.status==="CAPTURED")return;
+   const now=new Date();
+   if(!current||current.status!=="PENDING"||!current.reservationExpiresAt||current.reservationExpiresAt>now||current.payment?.status==="CAPTURED")return;
+   // Claim the expiry with a conditional write before restoring inventory. This
+   // serializes the transition against payment confirmation and other cron runs.
+   const claimed=await tx.order.updateMany({
+    where:{id:current.id,status:"PENDING",reservationExpiresAt:{lte:now}},
+    data:{status:"CANCELLED",checkoutKey:null}
+   });
+   if(claimed.count!==1)return;
    for(const item of current.items){
     if(item.variantId)await tx.productVariant.update({where:{id:item.variantId},data:{inventoryQty:{increment:item.quantity}}});
     else await tx.product.update({where:{id:item.productId},data:{inventoryQty:{increment:item.quantity}}});
     await tx.inventoryMovement.create({data:{productId:item.productId,variantId:item.variantId,quantityDelta:item.quantity,reason:"RESERVATION_EXPIRED",reference:current.orderNumber}});
    }
-   await tx.order.update({where:{id:current.id},data:{status:"CANCELLED",checkoutKey:null}});
    count++;
   });
  }

@@ -1,3 +1,4 @@
+import "../../reviews-wishlist.css";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/admin";

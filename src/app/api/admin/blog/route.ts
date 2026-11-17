@@ -4,7 +4,7 @@ import { requireAdmin } from "@/lib/admin";
 import { prisma } from "@/lib/prisma";
 
 const slugSchema = z.string().trim().min(2).max(160).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
-const schema = z.object({
+const schemaFields = z.object({
   title: z.string().trim().min(3).max(180),
   slug: slugSchema,
   excerpt: z.string().max(500).optional().nullable(),
@@ -20,7 +20,8 @@ const schema = z.object({
   categoryIds: z.array(z.string().min(1)).max(30).default([]),
   tagIds: z.array(z.string().min(1)).max(50).default([]),
   relatedProductIds: z.array(z.string().min(1)).max(50).default([]),
-}).superRefine((value, ctx) => {
+});
+const schema = schemaFields.superRefine((value, ctx) => {
   if (value.status === "SCHEDULED" && !value.scheduledAt) ctx.addIssue({ code: "custom", path: ["scheduledAt"], message: "A scheduled publication date is required." });
   if (value.status === "SCHEDULED" && value.scheduledAt && new Date(value.scheduledAt) <= new Date()) ctx.addIssue({ code: "custom", path: ["scheduledAt"], message: "Scheduled publication must be in the future." });
 });
@@ -108,7 +109,7 @@ export async function PATCH(request: NextRequest) {
   if (!admin) return NextResponse.json({ error: "Administrator permission required." }, { status: 403 });
   const body = await request.json().catch(() => null);
   if (!body?.id) return NextResponse.json({ error: "Post id is required." }, { status: 400 });
-  const parsed = schema.partial().safeParse(body.data);
+  const parsed = schemaFields.partial().safeParse(body.data);
   if (!parsed.success) return NextResponse.json({ error: "Invalid blog post update.", details: parsed.error.flatten() }, { status: 400 });
   const current = await prisma.blogPost.findUnique({ where: { id: body.id }, select: { id: true, publishedAt: true } });
   if (!current) return NextResponse.json({ error: "Blog post not found." }, { status: 404 });
@@ -149,7 +150,7 @@ export async function PATCH(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   const admin = await authorised();
   if (!admin) return NextResponse.json({ error: "Administrator permission required." }, { status: 403 });
-  const id = request.nextUrl.searchParams.get("id");
+  const id = new URL(request.url).searchParams.get("id");
   if (!id) return NextResponse.json({ error: "Post id is required." }, { status: 400 });
   const result = await prisma.blogPost.updateMany({ where: { id }, data: { status: "ARCHIVED", scheduledAt: null, noIndex: true } });
   if (!result.count) return NextResponse.json({ error: "Blog post not found." }, { status: 404 });

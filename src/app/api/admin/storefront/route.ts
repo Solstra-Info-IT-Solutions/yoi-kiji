@@ -34,7 +34,13 @@ export async function GET() {
   if (!admin) return NextResponse.json({ error: "Administrator permission required." }, { status: 403 });
   const [sections, collections, products] = await Promise.all([
     prisma.homepageSection.findMany({ orderBy: [{ position: "asc" }, { key: "asc" }] }),
-    prisma.storeCollection.findMany({ include: { products: { include: { product: { select: { id: true, name: true, sku: true } } }, _count: { select: { products: true } } }, orderBy: [{ sortOrder: "asc" }, { name: "asc" }] }),
+    prisma.storeCollection.findMany({
+      include: {
+        products: { include: { product: { select: { id: true, name: true, sku: true } } } },
+        _count: { select: { products: true } },
+      },
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+    }),
     prisma.product.findMany({ where: { isActive: true }, select: { id: true, name: true, sku: true }, orderBy: { name: "asc" }, take: 300 }),
   ]);
   return NextResponse.json({ sections, collections, products });

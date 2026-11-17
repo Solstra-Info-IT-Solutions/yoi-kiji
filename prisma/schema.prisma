@@ -239,6 +239,7 @@ model Order {
   couponCode          String?
   couponRedemptions   CouponRedemption[]
   notifications       NotificationLog[]
+  taxInvoice          TaxInvoice?
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
   @@index([userId, createdAt])
@@ -519,4 +520,32 @@ model PasswordResetRequestLog {
   createdAt DateTime @default(now())
   @@index([emailHash, createdAt])
   @@index([ipHash, createdAt])
+}
+
+
+model TaxInvoice {
+  id                String   @id @default(cuid())
+  orderId           String   @unique
+  invoiceNumber     String   @unique
+  financialYear     String
+  sequenceNumber    Int
+  issuedAt          DateTime @default(now())
+  sellerSnapshot    Json
+  buyerSnapshot     Json
+  lineItems         Json
+  taxablePaise      Int
+  taxPaise           Int
+  shippingPaise      Int
+  discountPaise      Int
+  totalPaise         Int
+  placeOfSupplyCode String
+  taxType            String
+  order              Order    @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  @@index([financialYear, sequenceNumber])
+}
+
+model InvoiceSequence {
+  financialYear String   @id
+  lastNumber    Int      @default(0)
+  updatedAt     DateTime @updatedAt
 }

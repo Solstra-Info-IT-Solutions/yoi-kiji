@@ -13,13 +13,20 @@ export async function POST(request:NextRequest){
    const current=await tx.order.findUnique({where:{id:order.id},include:{payment:true,items:true}});
    const now=new Date();
    if(!current||current.status!=="PENDING"||!current.reservationExpiresAt||current.reservationExpiresAt>now||current.payment?.status==="CAPTURED")return;
-   // Claim the expiry with a conditional write before restoring inventory. This
-   // serializes the transition against payment confirmation and other cron runs.
+   // Claim expiry before releasing coupon and inventory reservations. The conditional
+   // status transition ensures only one worker can perform either release.
    const claimed=await tx.order.updateMany({
     where:{id:current.id,status:"PENDING",reservationExpiresAt:{lte:now}},
     data:{status:"CANCELLED",checkoutKey:null}
    });
    if(claimed.count!==1)return;
+   const redemption=await tx.couponRedemption.findFirst({where:{orderId:current.id},select:{couponId:true}});
+   if(redemption){
+    const released=await tx.couponRedemption.deleteMany({where:{orderId:current.id}});
+    if(released.count>0){
+     await tx.coupon.update({where:{id:redemption.couponId},data:{usageCount:{decrement:released.count}}});
+    }
+   }
    for(const item of current.items){
     if(item.variantId)await tx.productVariant.update({where:{id:item.variantId},data:{inventoryQty:{increment:item.quantity}}});
     else await tx.product.update({where:{id:item.productId},data:{inventoryQty:{increment:item.quantity}}});

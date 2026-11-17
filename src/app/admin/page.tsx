@@ -76,5 +76,12 @@ export default async function AdminPage() {
         <span className="order-status">{order.status.toLowerCase()}</span>
       </article>)}</div>
     </section>
+    <section className="admin-control-navigation admin-insights-navigation">
+      <div className="admin-section-heading"><h2>Insights & optimisation</h2><span>Performance and discoverability</span></div>
+      <div className="admin-links">
+        <section><h3>Business intelligence</h3><p>Revenue trends, best sellers and downloadable reports.</p><Link className="text-link" href="/admin/reports">Sales reports & exports <span>↗</span></Link></section>
+        <section><h3>Search visibility</h3><p>Find missing product metadata and improve catalogue discoverability.</p><Link className="text-link" href="/admin/seo">SEO audit & metadata <span>↗</span></Link></section>
+      </div>
+    </section>
   </main>;
 }

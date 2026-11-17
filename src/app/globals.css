@@ -424,3 +424,16 @@ footer{font-size:14px}
 .customer-insights .order-status{display:inline-block;padding:.35rem .6rem;border:1px solid rgba(16,47,32,.25);font-size:12px}
 @media(max-width:760px){.customer-insights .admin-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.customer-filter-bar{grid-template-columns:1fr}.customer-insights .order-card{grid-template-columns:1fr}.admin-content-list article{align-items:flex-start;flex-wrap:wrap}}
 @media(max-width:560px){.admin-content-form{grid-template-columns:1fr}.admin-content-form .wide{grid-column:auto}.customer-insights .admin-stats{grid-template-columns:1fr 1fr}}
+
+
+/* Password recovery screens */
+.password-recovery-panel{width:min(100%,560px);margin:clamp(3rem,9vw,7rem) auto;padding:clamp(1.5rem,5vw,3.5rem);background:#f2f0e9;color:#102f20}
+.password-recovery-panel h1{font-family:var(--serif);font-size:clamp(2.6rem,7vw,4.6rem);font-weight:400;line-height:1.05;margin:1rem 0}
+.password-recovery-panel>p{max-width:44rem;color:#526b58;line-height:1.75}
+.password-recovery-form{display:grid;gap:1.1rem;margin-top:2rem}
+.password-recovery-form label{display:grid;gap:.45rem;font-size:14px;font-weight:600}
+.password-recovery-form input{width:100%;min-height:48px;padding:.8rem;border:1px solid rgba(16,47,32,.35);background:#fff;color:#102f20;font:inherit}
+.password-recovery-form button{min-height:50px;padding:.8rem 1.2rem;background:#102f20;color:#f2f0e9;border:0;font:inherit;font-weight:700;cursor:pointer}
+.password-recovery-form button:disabled{opacity:.55;cursor:wait}
+.password-recovery-feedback{padding:.9rem 1rem;background:#e5e9df;border-left:3px solid #385c46;color:#102f20;line-height:1.6}
+.password-recovery-back{display:inline-block;margin-top:1.5rem;color:#385c46;text-decoration:underline;text-underline-offset:4px}

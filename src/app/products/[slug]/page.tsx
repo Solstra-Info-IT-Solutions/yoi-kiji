@@ -3,6 +3,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getActiveProductBySlug } from "@/lib/catalog";
 import { ProductDetailInteractive } from "@/components/product-detail-interactive";
+import { WishlistButton } from "@/components/wishlist-button";
+import { ProductReviewSection } from "@/components/product-review-section";
+import { getCurrentUser } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -17,6 +21,12 @@ export default async function ProductPage({ params }: Props) {
   const product = await getActiveProductBySlug(slug);
   if (!product) notFound();
 
+  const user=await getCurrentUser();
+  const [reviews,reviewSummary,eligiblePurchase]=await Promise.all([
+    prisma.review.findMany({where:{productId:product.id,status:"APPROVED"},include:{user:{select:{name:true}}},orderBy:{createdAt:"desc"},take:50}),
+    prisma.review.aggregate({where:{productId:product.id,status:"APPROVED"},_avg:{rating:true},_count:{_all:true}}),
+    user?prisma.orderItem.findFirst({where:{productId:product.id,order:{userId:user.id,status:"DELIVERED",payment:{is:{status:"CAPTURED"}}}},select:{id:true}}):Promise.resolve(null),
+  ]);
   const dynamicSpecs = product.attributeValues.map(entry => {
     const value = entry.value;
     const formatted = Array.isArray(value) ? value.join(", ") : typeof value === "boolean" ? (value ? "Yes" : "No") : typeof value === "object" && value !== null ? JSON.stringify(value) : String(value);
@@ -38,7 +48,7 @@ export default async function ProductPage({ params }: Props) {
       basePricePaise={product.pricePaise}
     >
       <p className="eyebrow">{product.category?.name ?? "YOI KIJI COLLECTION"}</p>
-      <h1>{product.name}</h1>
+      <h1>{product.name}</h1>\n      <WishlistButton productId={product.id}/>
       <p className="product-description">{product.description}</p>
       {(product.material || product.color || product.careInstructions || product.lengthMm || product.widthMm || product.heightMm || dynamicSpecs.length > 0) && <dl className="product-specs">
         {product.material && <div><dt>Material</dt><dd>{product.material}</dd></div>}

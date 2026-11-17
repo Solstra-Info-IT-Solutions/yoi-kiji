@@ -229,7 +229,7 @@ model Order {
   payment             Payment?
   couponCode          String?
   couponRedemptions   CouponRedemption[]
-  returnRequests      ReturnRequest[]
+  returnRequest        ReturnRequest?
   notifications       NotificationLog[]
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt

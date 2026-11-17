@@ -61,6 +61,8 @@ export async function POST(request:NextRequest){
    if(coupon.maximumDiscountPaise!==null)discountPaise=Math.min(discountPaise,coupon.maximumDiscountPaise);
    discountPaise=Math.min(discountPaise,subtotalPaise);
   }
+  const appliedCoupon=coupon;
+  const customerId=user.id;
   const discountTaxPaise=subtotalPaise>0?Math.round(productTaxPaise*discountPaise/subtotalPaise):0;
   const taxPaise=productTaxPaise-discountTaxPaise+calculateTaxInclusive(shippingPaise,shippingTaxRateBps);
   const totalPaise=subtotalPaise+shippingPaise-discountPaise;
@@ -76,22 +78,23 @@ export async function POST(request:NextRequest){
       ? await tx.productVariant.updateMany({where:{id:line.variant.id,inventoryQty:{gte:line.quantity},isActive:true},data:{inventoryQty:{decrement:line.quantity}}})
       : await tx.product.updateMany({where:{id:line.product.id,inventoryQty:{gte:line.quantity},isActive:true},data:{inventoryQty:{decrement:line.quantity}}});
      if(result.count!==1)throw new Error(`Insufficient stock for ${line.product.name}.`);
-     await tx.inventoryMovement.create({data:{productId:line.product.id,variantId:line.variant?.id,quantityDelta:-line.quantity,reason:"ORDER_RESERVATION",reference:orderNumber,createdBy:user.id}});
+     await tx.inventoryMovement.create({data:{productId:line.product.id,variantId:line.variant?.id,quantityDelta:-line.quantity,reason:"ORDER_RESERVATION",reference:orderNumber,createdBy:customerId}});
     }
-    const existingAddress=await tx.address.findFirst({where:{userId:user.id,line1:parsed.data.shippingAddress.line1,postalCode:parsed.data.shippingAddress.postalCode,phone:parsed.data.shippingAddress.phone}});
-    if(!existingAddress)await tx.address.create({data:{userId:user.id,...parsed.data.shippingAddress,isDefault:!(await tx.address.count({where:{userId:user.id}}))}});
-    return tx.order.create({data:{
-     orderNumber,checkoutKey:parsed.data.checkoutKey,couponCode:coupon?.code??null,discountPaise,reservationExpiresAt:new Date(Date.now()+30*60*1000),userId:user.id,status:"PENDING",subtotalPaise,taxPaise,shippingPaise,totalPaise,
+    const existingAddress=await tx.address.findFirst({where:{userId:customerId,line1:parsed.data.shippingAddress.line1,postalCode:parsed.data.shippingAddress.postalCode,phone:parsed.data.shippingAddress.phone}});
+    if(!existingAddress)await tx.address.create({data:{userId:user.id,...parsed.data.shippingAddress,isDefault:!(await tx.address.count({where:{userId:customerId}}))}});
+    const createdOrder=await tx.order.create({data:{
+     orderNumber,checkoutKey:parsed.data.checkoutKey,couponCode:appliedCoupon?.code??null,discountPaise,reservationExpiresAt:new Date(Date.now()+30*60*1000),userId:customerId,status:"PENDING",subtotalPaise,taxPaise,shippingPaise,totalPaise,
      shippingAddress:parsed.data.shippingAddress,billingAddress:parsed.data.shippingAddress,
      items:{create:lineItems.map(l=>({productId:l.product.id,variantId:l.variant?.id,productName:l.product.name,variantLabel:l.label,sku:l.sku,hsnCode:l.product.hsnCode,quantity:l.quantity,unitPricePaise:l.price,gstRateBps:l.product.gstRateBps}))},
      payment:{create:{provider:"RAZORPAY",providerOrderId:gateway.id,amountPaise:totalPaise,currency:"INR",status:"CREATED"}}
     }});
-    if(coupon){
-     const reserved=await tx.coupon.updateMany({where:{id:coupon.id,isActive:true,...(coupon.usageLimit!==null?{usageCount:{lt:coupon.usageLimit}}:{})},data:{usageCount:{increment:1}}});
+    if(appliedCoupon){
+     const usageLimit=appliedCoupon.usageLimit;
+     const reserved=await tx.coupon.updateMany({where:{id:appliedCoupon.id,isActive:true,...(usageLimit!==null?{usageCount:{lt:usageLimit}}:{})},data:{usageCount:{increment:1}}});
      if(reserved.count!==1)throw new Error("This promotion has just reached its usage limit.");
-     await tx.couponRedemption.create({data:{couponId:coupon.id,orderId:order.id,userId:user.id,discountPaise}});
+     await tx.couponRedemption.create({data:{couponId:appliedCoupon.id,orderId:createdOrder.id,userId:customerId,discountPaise}});
     }
-    return order;
+    return createdOrder;
    });
    return NextResponse.json({orderId:order.id,orderNumber:order.orderNumber,razorpayOrderId:gateway.id,amount:totalPaise,currency:"INR",keyId});
   }catch(error){

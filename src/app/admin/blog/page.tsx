@@ -15,7 +15,7 @@ export default async function AdminBlogPage() {
     prisma.blogPost.findMany({ include: { author: { select: { name: true, email: true } }, _count: { select: { categories: true, tags: true, relatedProducts: true } } }, orderBy: { updatedAt: "desc" }, take: 100 }),
     prisma.blogCategory.findMany({ orderBy: { name: "asc" } }),
     prisma.blogTag.findMany({ orderBy: { name: "asc" } }),
-    prisma.product.findMany({ where: { isActive: true }, select: { id: true, name: true, sku: true }, orderBy: { name: "asc" }, take: 300 }),
+    prisma.product.findMany({ where: { isActive: true }, select: { id: true, name: true, slug: true, sku: true }, orderBy: { name: "asc" }, take: 300 }),
   ]);
   return <main className="commerce-page">
     <div className="commerce-breadcrumb"><Link href="/admin">Admin</Link><span>/</span> Blog studio</div>

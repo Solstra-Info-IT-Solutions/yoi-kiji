@@ -11,7 +11,9 @@
 - `SHIPPING_FLAT_RATE_PAISE`: temporary server-side shipping charge in paise. Do not set to zero unless free shipping is an approved business rule.
 - Delhivery and ATS credentials are intentionally not assumed. Obtain the current API contract, account identifiers, pickup location, serviceability rules, rate rules and label requirements from the client's courier accounts before enabling live bookings.
 
-## Transactional notifications\n- Configure EMAIL_API_KEY and EMAIL_FROM for Resend order confirmation messages.\n- WhatsApp order confirmations require the official Meta Cloud API version, phone number ID, access token and an approved template with two body parameters (order number and total).\n- WhatsApp is sent only when the customer explicitly enables transactional WhatsApp updates in their account. Keep the default opt-in false.\n\n## First administrator
+## Transactional notifications\n- Configure EMAIL_API_KEY and EMAIL_FROM for Resend order confirmation messages.\n- WhatsApp order confirmations require the official Meta Cloud API version, phone number ID, access token and an approved template with two body parameters (order number and total).\n- WhatsApp is sent only when the customer explicitly enables transactional WhatsApp updates in their account. Keep the default opt-in false.\n\n- Order status emails are sent for Processing, Shipped, Delivered and Cancelled transitions. These use the same Resend credentials. Each order/status event is deduplicated in `NotificationLog`; provider failures are recorded as FAILED and do not roll back the order status.
+
+## First administrator
 Public registration always creates a CUSTOMER. Never accept a role from a registration request. Promote the first verified business administrator directly in the database after registration, for example:
 ```sql
 UPDATE "User" SET "role" = 'ADMIN' WHERE "email" = 'verified-admin@example.com';

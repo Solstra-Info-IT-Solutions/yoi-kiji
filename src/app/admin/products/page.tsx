@@ -49,6 +49,7 @@ export default async function AdminProducts() {
             pricePaise: product.pricePaise, compareAtPaise: product.compareAtPaise, gstRateBps: product.gstRateBps,
             inventoryQty: product.inventoryQty, isActive: product.isActive, hasVariants: product.hasVariants,
             productTypeId: product.productTypeId, categoryId: product.categoryId,
+            seoTitle: product.seoTitle, seoDescription: product.seoDescription, seoKeywords: product.seoKeywords, canonicalUrl: product.canonicalUrl, noIndex: product.noIndex,
             categoryLinks: product.categoryLinks.map(link => ({ categoryId: link.categoryId, isPrimary: link.isPrimary })),
             attributeValues: product.attributeValues.map(value => ({ attributeId: value.attributeId, value: value.value })),
           }}/>

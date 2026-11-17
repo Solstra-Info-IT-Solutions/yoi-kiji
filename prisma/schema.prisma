@@ -136,6 +136,11 @@ model Product {
   gstRateBps      Int              @default(0)
   inventoryQty    Int              @default(0)
   isActive        Boolean          @default(false)
+  seoTitle        String?
+  seoDescription  String?          @db.Text
+  seoKeywords     String[]         @default([])
+  canonicalUrl    String?
+  noIndex         Boolean          @default(false)
   hasVariants     Boolean          @default(false)
   categoryId      String?
   category        Category?        @relation(fields: [categoryId], references: [id], onDelete: SetNull)

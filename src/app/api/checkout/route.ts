@@ -4,10 +4,12 @@ import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { calculateTaxInclusive } from "@/lib/money";
+import { calculateCouponDiscount } from "@/lib/promotions";
 import { checkDelhiveryServiceability } from "@/lib/shipping/delhivery";
 
 const schema=z.object({
  checkoutKey:z.string().uuid(),
+ couponCode:z.string().trim().min(3).max(32).optional(),
  items:z.array(z.object({productId:z.string().min(1),variantId:z.string().optional(),quantity:z.number().int().min(1).max(10)})).min(1).max(30),
  shippingAddress:z.object({fullName:z.string().min(2).max(100),phone:z.string().min(8).max(20),line1:z.string().min(4).max(180),line2:z.string().max(180).optional(),city:z.string().min(2).max(80),state:z.string().min(2).max(80),postalCode:z.string().min(5).max(10),countryCode:z.string().length(2).default("IN")})
 });
@@ -48,8 +50,21 @@ export async function POST(request:NextRequest){
   if(!process.env.SELLER_GSTIN&&lineItems.some(l=>l.product.gstRateBps>0))return fail("Product GST rates require the seller GST registration details.",503);
   const subtotalPaise=lineItems.reduce((s,l)=>s+l.price*l.quantity,0);
   const productTaxPaise=lineItems.reduce((s,l)=>s+calculateTaxInclusive(l.price*l.quantity,l.product.gstRateBps),0);
-  const taxPaise=productTaxPaise+calculateTaxInclusive(shippingPaise,shippingTaxRateBps);
-  const totalPaise=subtotalPaise+shippingPaise;
+  let coupon: { id: string; code: string; discountType: "PERCENTAGE" | "FIXED_AMOUNT"; discountValue: number; maximumDiscountPaise: number | null; usageLimit: number | null; usageCount: number; minimumSubtotalPaise: number; startsAt: Date | null; endsAt: Date | null; isActive: boolean } | null = null;
+  let discountPaise=0;
+  const couponCode=parsed.data.couponCode?.trim().toUpperCase();
+  if(couponCode){
+   coupon=await prisma.coupon.findUnique({where:{code:couponCode}});
+   const now=new Date();
+   if(!coupon||!coupon.isActive||(coupon.startsAt&&coupon.startsAt>now)||(coupon.endsAt&&coupon.endsAt<now)||(coupon.usageLimit!==null&&coupon.usageCount>=coupon.usageLimit))return fail("This promotion code is invalid, expired or no longer available.",400);
+   if(subtotalPaise<coupon.minimumSubtotalPaise)return fail("Your bag does not meet the minimum order value for this promotion.",400);
+   discountPaise=calculateCouponDiscount(subtotalPaise,coupon.discountType,coupon.discountValue,coupon.maximumDiscountPaise);
+  }
+  const appliedCoupon=coupon;
+  const customerId=user.id;
+  const discountTaxPaise=subtotalPaise>0?Math.round(productTaxPaise*discountPaise/subtotalPaise):0;
+  const taxPaise=productTaxPaise-discountTaxPaise+calculateTaxInclusive(shippingPaise,shippingTaxRateBps);
+  const totalPaise=subtotalPaise+shippingPaise-discountPaise;
   if(!Number.isSafeInteger(totalPaise)||totalPaise<100)return fail("The order total is invalid.");
   const basic=Buffer.from(`${keyId}:${secret}`).toString("base64");
   const gatewayResponse=await fetch("https://api.razorpay.com/v1/orders",{method:"POST",headers:{"Authorization":`Basic ${basic}`,"Content-Type":"application/json"},body:JSON.stringify({amount:totalPaise,currency:"INR",receipt:orderNumber,notes:{customerId:user.id}}),cache:"no-store"});
@@ -62,16 +77,23 @@ export async function POST(request:NextRequest){
       ? await tx.productVariant.updateMany({where:{id:line.variant.id,inventoryQty:{gte:line.quantity},isActive:true},data:{inventoryQty:{decrement:line.quantity}}})
       : await tx.product.updateMany({where:{id:line.product.id,inventoryQty:{gte:line.quantity},isActive:true},data:{inventoryQty:{decrement:line.quantity}}});
      if(result.count!==1)throw new Error(`Insufficient stock for ${line.product.name}.`);
-     await tx.inventoryMovement.create({data:{productId:line.product.id,variantId:line.variant?.id,quantityDelta:-line.quantity,reason:"ORDER_RESERVATION",reference:orderNumber,createdBy:user.id}});
+     await tx.inventoryMovement.create({data:{productId:line.product.id,variantId:line.variant?.id,quantityDelta:-line.quantity,reason:"ORDER_RESERVATION",reference:orderNumber,createdBy:customerId}});
     }
-    const existingAddress=await tx.address.findFirst({where:{userId:user.id,line1:parsed.data.shippingAddress.line1,postalCode:parsed.data.shippingAddress.postalCode,phone:parsed.data.shippingAddress.phone}});
-    if(!existingAddress)await tx.address.create({data:{userId:user.id,...parsed.data.shippingAddress,isDefault:!(await tx.address.count({where:{userId:user.id}}))}});
-    return tx.order.create({data:{
-     orderNumber,checkoutKey:parsed.data.checkoutKey,reservationExpiresAt:new Date(Date.now()+30*60*1000),userId:user.id,status:"PENDING",subtotalPaise,taxPaise,shippingPaise,totalPaise,
+    const existingAddress=await tx.address.findFirst({where:{userId:customerId,line1:parsed.data.shippingAddress.line1,postalCode:parsed.data.shippingAddress.postalCode,phone:parsed.data.shippingAddress.phone}});
+    if(!existingAddress)await tx.address.create({data:{userId:customerId,...parsed.data.shippingAddress,isDefault:!(await tx.address.count({where:{userId:customerId}}))}});
+    const createdOrder=await tx.order.create({data:{
+     orderNumber,checkoutKey:parsed.data.checkoutKey,couponCode:appliedCoupon?.code??null,discountPaise,reservationExpiresAt:new Date(Date.now()+30*60*1000),userId:customerId,status:"PENDING",subtotalPaise,taxPaise,shippingPaise,totalPaise,
      shippingAddress:parsed.data.shippingAddress,billingAddress:parsed.data.shippingAddress,
      items:{create:lineItems.map(l=>({productId:l.product.id,variantId:l.variant?.id,productName:l.product.name,variantLabel:l.label,sku:l.sku,hsnCode:l.product.hsnCode,quantity:l.quantity,unitPricePaise:l.price,gstRateBps:l.product.gstRateBps}))},
      payment:{create:{provider:"RAZORPAY",providerOrderId:gateway.id,amountPaise:totalPaise,currency:"INR",status:"CREATED"}}
     }});
+    if(appliedCoupon){
+     const usageLimit=appliedCoupon.usageLimit;
+     const reserved=await tx.coupon.updateMany({where:{id:appliedCoupon.id,isActive:true,...(usageLimit!==null?{usageCount:{lt:usageLimit}}:{})},data:{usageCount:{increment:1}}});
+     if(reserved.count!==1)throw new Error("This promotion has just reached its usage limit.");
+     await tx.couponRedemption.create({data:{couponId:appliedCoupon.id,orderId:createdOrder.id,userId:customerId,discountPaise}});
+    }
+    return createdOrder;
    });
    return NextResponse.json({orderId:order.id,orderNumber:order.orderNumber,razorpayOrderId:gateway.id,amount:totalPaise,currency:"INR",keyId});
   }catch(error){

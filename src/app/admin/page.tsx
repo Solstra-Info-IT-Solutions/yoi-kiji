@@ -10,7 +10,8 @@ export const metadata = { title: "YOI KIJI · Operations" };
 const navigation = [
   { title: "Catalogue", description: "Products, collections and product specifications", links: [{ label: "Products", href: "/admin/products" }, { label: "Categories", href: "/admin/categories" }, { label: "Product types & attributes", href: "/admin/product-types" }] },
   { title: "Fulfilment", description: "Orders, stock movement and fulfilment operations", links: [{ label: "Orders", href: "/admin/orders" }, { label: "Inventory ledger", href: "/admin/inventory" }] },
-  { title: "Customers", description: "Customer accounts and purchase history", links: [{ label: "Customer directory", href: "/admin/customers" }] },
+  { title: "Storefront", description: "Homepage storytelling and product merchandising", links: [{ label: "Content studio", href: "/admin/storefront" }, { label: "Categories", href: "/admin/categories" }, { label: "Products", href: "/admin/products" }] },
+  { title: "Growth", description: "Promotions and customer relationships", links: [{ label: "Promotions & coupons", href: "/admin/promotions" }, { label: "Customer intelligence", href: "/admin/customers" }] },
 ];
 
 export default async function AdminPage() {

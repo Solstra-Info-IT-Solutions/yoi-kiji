@@ -85,7 +85,7 @@ describe("Razorpay webhook payment integrity", () => {
 
  it("rejects a payment tied to a different gateway order", async () => {
   const response = await POST(signedRequest({ order_id: "order_gateway_other" }));
-  expect(response.status).toBe(200);
+  expect(response.status).toBe(400);
   expect(mocks.prisma.$transaction).not.toHaveBeenCalled();
  });
 

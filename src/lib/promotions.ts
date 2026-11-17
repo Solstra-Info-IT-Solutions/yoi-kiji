@@ -1,4 +1,4 @@
-import { assertMinorUnits } from "@/lib/money";
+import { assertMinorUnits } from "./money";
 
 export type CouponDiscount = "PERCENTAGE" | "FIXED_AMOUNT";
 

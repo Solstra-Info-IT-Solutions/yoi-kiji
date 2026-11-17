@@ -72,7 +72,8 @@ export async function POST(request: NextRequest) {
       if (productIds.length) await tx.storeCollectionProduct.createMany({ data: productIds.map((productId, index) => ({ collectionId: created.id, productId, sortOrder: index })) });
       return created;
     });
-    return NextResponse.json({ collection }, { status: 201 });
+    const fullCollection = await prisma.storeCollection.findUnique({ where: { id: collection.id }, include: { products: { include: { product: { select: { id: true, name: true, sku: true } } } }, _count: { select: { products: true } } } });
+    return NextResponse.json({ collection: fullCollection }, { status: 201 });
   } catch {
     return NextResponse.json({ error: "Collection slug already exists." }, { status: 409 });
   }
@@ -109,7 +110,8 @@ export async function PATCH(request: NextRequest) {
       }
       return updated;
     });
-    return NextResponse.json({ collection });
+    const fullCollection = await prisma.storeCollection.findUnique({ where: { id: collection.id }, include: { products: { include: { product: { select: { id: true, name: true, sku: true } } } }, _count: { select: { products: true } } } });
+    return NextResponse.json({ collection: fullCollection });
   } catch {
     return NextResponse.json({ error: "Collection could not be updated." }, { status: 404 });
   }

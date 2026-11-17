@@ -50,6 +50,11 @@ enum FulfillmentProvider {
   MANUAL
 }
 
+enum CouponDiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+}
+
 enum ProductAttributeType {
   TEXT
   NUMBER
@@ -340,4 +345,79 @@ model ProductCategory {
   category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   @@id([productId, categoryId])
   @@index([categoryId, sortOrder])
+}
+
+
+model HomepageSection {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  eyebrow   String?
+  title     String?
+  body      String?  @db.Text
+  imageUrl  String?
+  imageAlt  String?
+  ctaLabel  String?
+  ctaHref   String?
+  position  Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([isActive, position])
+}
+
+model StoreCollection {
+  id          String                  @id @default(cuid())
+  name        String
+  slug        String                  @unique
+  description String?                 @db.Text
+  imageUrl    String?
+  sortOrder   Int                     @default(0)
+  isActive    Boolean                 @default(true)
+  products    StoreCollectionProduct[]
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
+  @@index([isActive, sortOrder])
+}
+
+model StoreCollectionProduct {
+  collectionId String
+  productId    String
+  sortOrder    Int             @default(0)
+  collection   StoreCollection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  product      Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  @@id([collectionId, productId])
+  @@index([productId])
+}
+
+model Coupon {
+  id                    String              @id @default(cuid())
+  code                  String              @unique
+  description           String?
+  discountType          CouponDiscountType
+  discountValue         Int
+  minimumSubtotalPaise  Int                 @default(0)
+  maximumDiscountPaise  Int?
+  usageLimit            Int?
+  usageCount            Int                 @default(0)
+  startsAt              DateTime?
+  endsAt                DateTime?
+  isActive              Boolean             @default(true)
+  redemptions           CouponRedemption[]
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+  @@index([isActive, startsAt, endsAt])
+}
+
+model CouponRedemption {
+  id           String   @id @default(cuid())
+  couponId     String
+  orderId      String
+  userId       String
+  discountPaise Int
+  coupon       Coupon   @relation(fields: [couponId], references: [id], onDelete: Restrict)
+  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  createdAt    DateTime @default(now())
+  @@unique([couponId, orderId])
+  @@index([userId, createdAt])
 }

@@ -1,3 +1,74 @@
+import type { Metadata } from "next";
 import Link from "next/link";
-export const metadata={title:"Journal"};
-export default function Journal(){return <main className="editorial-page"><div className="commerce-breadcrumb"><Link href="/">Home</Link><span>/</span> Journal</div><p className="eyebrow">NOTES ON MAKING A HOME</p><h1>Live well.<br/><em>Feel at home.</em></h1><p>Care guides, textile stories and ideas for making everyday spaces feel more considered. The journal is being prepared.</p><Link className="primary-link" href="/shop">Explore the collections <span>↗</span></Link></main>}
+import { prisma } from "@/lib/prisma";
+
+export const revalidate = 300;
+export const metadata: Metadata = {
+  title: "Journal",
+  description: "Care guides, textile stories and considered ideas for making everyday spaces feel like home.",
+  alternates: { canonical: "/journal" },
+};
+
+type SearchParams = Promise<{ category?: string; tag?: string }>;
+
+export default async function JournalPage({ searchParams }: { searchParams: SearchParams }) {
+  const filters = await searchParams;
+  const category = filters.category?.trim();
+  const tag = filters.tag?.trim();
+  const now = new Date();
+  const where = {
+    status: "PUBLISHED" as const,
+    publishedAt: { lte: now },
+    noIndex: false,
+    ...(category ? { categories: { some: { category: { slug: category } } } } : {}),
+    ...(tag ? { tags: { some: { tag: { slug: tag } } } } : {}),
+  };
+  const [posts, categories, tags] = await Promise.all([
+    prisma.blogPost.findMany({
+      where,
+      select: {
+        id: true, title: true, slug: true, excerpt: true, coverImageUrl: true,
+        coverImageAlt: true, publishedAt: true,
+        author: { select: { name: true } },
+        categories: { include: { category: { select: { name: true, slug: true } } } },
+      },
+      orderBy: [{ publishedAt: "desc" }, { id: "desc" }],
+      take: 48,
+    }),
+    prisma.blogCategory.findMany({ where: { posts: { some: { post: { status: "PUBLISHED", publishedAt: { lte: now }, noIndex: false } } } }, orderBy: { name: "asc" } }),
+    prisma.blogTag.findMany({ where: { posts: { some: { post: { status: "PUBLISHED", publishedAt: { lte: now }, noIndex: false } } } }, orderBy: { name: "asc" } }),
+  ]);
+  const selectedLabel = category ? categories.find(item => item.slug === category)?.name : tag ? tags.find(item => item.slug === tag)?.name : null;
+
+  return <main className="journal-page">
+    <div className="commerce-breadcrumb"><Link href="/">Home</Link><span>/</span> Journal</div>
+    <header className="journal-hero">
+      <p className="eyebrow">NOTES ON MAKING A HOME</p>
+      <h1>Live well.<br/><em>Feel at home.</em></h1>
+      <p>Care guides, textile stories and ideas for making everyday spaces feel more considered.</p>
+    </header>
+    <nav className="journal-filters" aria-label="Filter journal articles">
+      <Link className={!category && !tag ? "is-active" : ""} href="/journal">All stories</Link>
+      {categories.map(item => <Link className={category === item.slug ? "is-active" : ""} href={"/journal?category=" + encodeURIComponent(item.slug)} key={item.id}>{item.name}</Link>)}
+      {tags.map(item => <Link className={tag === item.slug ? "is-active" : ""} href={"/journal?tag=" + encodeURIComponent(item.slug)} key={"tag-" + item.id}># {item.name}</Link>)}
+    </nav>
+    <div className="journal-results-heading">
+      <h2>{selectedLabel ? "Stories: " + selectedLabel : "The journal"}</h2>
+      <span>{posts.length} {posts.length === 1 ? "story" : "stories"}</span>
+    </div>
+    {posts.length ? <section className="journal-grid" aria-label="Journal articles">
+      {posts.map((post, index) => <article className={"journal-card" + (index === 0 && !category && !tag ? " journal-card-featured" : "")} key={post.id}>
+        <Link className="journal-card-image" href={"/journal/" + post.slug} aria-label={"Read " + post.title}>
+          {post.coverImageUrl ? <img src={post.coverImageUrl} alt={post.coverImageAlt ?? ""} loading={index > 2 ? "lazy" : "eager"}/> : <span>YOI KIJI · JOURNAL</span>}
+        </Link>
+        <div className="journal-card-copy">
+          <div className="journal-card-categories">{post.categories.map(link => <Link href={"/journal?category=" + encodeURIComponent(link.category.slug)} key={link.category.slug}>{link.category.name}</Link>)}</div>
+          <h3><Link href={"/journal/" + post.slug}>{post.title}</Link></h3>
+          {post.excerpt && <p>{post.excerpt}</p>}
+          <div className="journal-card-meta"><span>{post.author?.name ?? "YOI KIJI Editorial"}</span><time dateTime={post.publishedAt?.toISOString()}>{post.publishedAt?.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</time></div>
+          <Link className="journal-read-link" href={"/journal/" + post.slug}>Read story <span>↗</span></Link>
+        </div>
+      </article>)}
+    </section> : <section className="journal-empty"><span>✳</span><h2>No stories here just yet.</h2><p>Try another category or return to all journal stories.</p><Link href="/journal">View all stories ↗</Link></section>}
+  </main>;
+}

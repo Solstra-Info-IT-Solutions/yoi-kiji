@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
   const orders = await prisma.order.findMany({
     where: {
       ...(status && allowedStatuses.includes(status) ? { status: status as never } : {}),
-      ...(paymentStatus && allowedPayments.includes(paymentStatus) ? { payment: { is: { status: paymentStatus as never } } } : {}),
+      ...(paymentStatus === "NONE" ? { payment: { is: null } } : paymentStatus && allowedPayments.includes(paymentStatus) ? { payment: { is: { status: paymentStatus as never } } } : {}),
     },
     include: { user: { select: { name: true, email: true } }, items: true, payment: true },
     orderBy: { createdAt: "desc" },

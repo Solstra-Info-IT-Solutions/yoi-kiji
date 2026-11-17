@@ -7,7 +7,7 @@ export function AdminMediaLibrary() {
  const load=useCallback(async()=>{const p=new URLSearchParams();if(folderId)p.set("folderId",folderId);if(query)p.set("q",query);if(type)p.set("type",type);const r=await fetch("/api/admin/media?"+p);const d=await r.json();if(!r.ok)throw new Error(d.error||"Could not load media.");setAssets(d.assets);setFolders(d.folders);},[folderId,query,type]);
  useEffect(()=>{load().catch(e=>setError(e.message));},[load]);
  async function makeFolder(){const name=window.prompt("New folder name");if(!name)return;const r=await fetch("/api/admin/media/folders",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name})});const d=await r.json();if(!r.ok){setError(d.error);return;}setFolderId(d.folder.id);await load();}
- async function upload(file:File){setBusy(true);setError("");setMessage("");try{
+ async function editAsset(a:Asset){const title=window.prompt("Asset title",a.title||"");if(title===null)return;const altText=window.prompt("Alt text / description",a.altText||"");if(altText===null)return;const r=await fetch("/api/admin/media",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:a.id,title,altText})});const d=await r.json();if(!r.ok){setError(d.error||"Could not update asset.");return;}await load();}\n async function upload(file:File){setBusy(true);setError("");setMessage("");try{
   const resourceType=file.type.startsWith("image/")?"IMAGE":(file.type.startsWith("video/")||file.type.startsWith("audio/"))?"VIDEO":file.type==="application/pdf"?"RAW":null;
   if(!resourceType)throw new Error("Choose an image, video, audio file or PDF.");
   const limit=resourceType==="IMAGE"?25:resourceType==="VIDEO"?200:50;if(file.size>limit*1024*1024)throw new Error("File exceeds the "+limit+" MB limit.");
@@ -36,7 +36,7 @@ export function AdminMediaLibrary() {
     <strong style={{display:"block",marginTop:10,overflowWrap:"anywhere"}}>{a.title||a.originalFilename||"Media asset"}</strong>
     <small>{a.format.toUpperCase()} · {size(a.bytes)}{a.width&&a.height?" · "+a.width+"×"+a.height:""}</small>
     <small style={{display:"block"}}>{a.folder?.name||"Unfiled"} · {new Intl.DateTimeFormat("en-IN",{dateStyle:"medium"}).format(new Date(a.createdAt))}</small>
-    <button type="button" onClick={()=>navigator.clipboard.writeText(a.secureUrl).then(()=>setMessage("Asset URL copied."))}>Copy asset URL</button>
+    <button type="button" onClick={()=>editAsset(a)}>Edit metadata</button> <button type="button" onClick={()=>navigator.clipboard.writeText(a.secureUrl).then(()=>setMessage("Asset URL copied."))}>Copy asset URL</button>
    </article>)}
   </div>
   {assets.length===0&&<p>No media assets found. Upload your first asset to begin the library.</p>}

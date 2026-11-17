@@ -50,6 +50,22 @@ enum FulfillmentProvider {
   MANUAL
 }
 
+enum ReturnRequestStatus {
+  REQUESTED
+  APPROVED
+  REJECTED
+  RECEIVED
+  REFUND_PENDING
+  REFUNDED
+}
+
+enum ReturnReason {
+  DAMAGED
+  WRONG_ITEM
+  QUALITY_ISSUE
+  OTHER
+}
+
 enum CouponDiscountType {
   PERCENTAGE
   FIXED_AMOUNT
@@ -76,6 +92,7 @@ model User {
   addresses    Address[]
   orders       Order[]
   couponRedemptions CouponRedemption[]
+  returnRequests ReturnRequest[]
 }
 
 model Address {
@@ -212,6 +229,7 @@ model Order {
   payment             Payment?
   couponCode          String?
   couponRedemptions   CouponRedemption[]
+  returnRequest        ReturnRequest?
   notifications       NotificationLog[]
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
@@ -423,5 +441,26 @@ model CouponRedemption {
   user         User     @relation(fields: [userId], references: [id], onDelete: Restrict)
   createdAt    DateTime @default(now())
   @@unique([couponId, orderId])
+  @@index([userId, createdAt])
+}
+
+
+model ReturnRequest {
+  id                 String               @id @default(cuid())
+  requestNumber      String               @unique
+  orderId            String
+  userId             String
+  status             ReturnRequestStatus  @default(REQUESTED)
+  reason             ReturnReason
+  note               String?              @db.Text
+  adminNote          String?              @db.Text
+  items              Json
+  refundAmountPaise  Int                  @default(0)
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  order              Order                @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  user               User                 @relation(fields: [userId], references: [id], onDelete: Restrict)
+  @@unique([orderId])
+  @@index([status, createdAt])
   @@index([userId, createdAt])
 }

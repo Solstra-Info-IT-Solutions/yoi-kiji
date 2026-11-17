@@ -14,8 +14,13 @@ export async function POST(request:NextRequest){
   if(paymentRef){
    const matched=await prisma.payment.findUnique({where:{providerPaymentId:paymentRef}});
    if(matched){
+    if(eventId&&matched.webhookEventId===eventId)return NextResponse.json({received:true,duplicate:true});
     const processed=event.event==="refund.processed";
-    await prisma.$transaction([prisma.payment.update({where:{id:matched.id},data:{refundId:refund.id??matched.refundId,refundStatus:processed?"processed":"failed",status:processed?"REFUNDED":matched.status,webhookEventId:eventId??undefined}}),...(processed?[prisma.order.update({where:{id:matched.orderId},data:{status:"REFUNDED"}})]:[])]);
+    await prisma.$transaction([
+     prisma.payment.update({where:{id:matched.id},data:{refundId:refund.id??matched.refundId,refundStatus:processed?"processed":"failed",status:processed?"REFUNDED":matched.status,webhookEventId:eventId??undefined}}),
+     ...(processed?[prisma.order.update({where:{id:matched.orderId},data:{status:"REFUNDED"}})]:[]),
+     prisma.returnRequest.updateMany({where:{orderId:matched.orderId,status:"REFUND_PENDING"},data:{status:processed?"REFUNDED":"RECEIVED",...(!processed?{adminNote:"Razorpay refund failed. Review the payment and retry from the returns workspace."}:{})}}),
+    ]);
    }
   }
   return NextResponse.json({received:true});

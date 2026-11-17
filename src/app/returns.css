@@ -1,0 +1,21 @@
+.account-return-form,.account-return-history{margin:2rem 0;padding:clamp(1.1rem,3vw,2rem);background:#f2f0e9;color:#102f20;border:1px solid rgba(16,47,32,.18)}
+.account-return-form .admin-section-heading,.account-return-history .admin-section-heading{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;flex-wrap:wrap;margin-bottom:1rem}
+.account-return-form h2,.account-return-history h2{font-family:var(--serif);font-size:clamp(28px,4vw,40px);font-weight:400;margin:0}
+.account-return-form form{display:grid;gap:1rem;max-width:650px}
+.account-return-form label,.admin-return-note{display:grid;gap:.4rem;font-size:14px;font-weight:600}
+.account-return-form input,.account-return-form select,.account-return-form textarea,.admin-return-note textarea{width:100%;padding:.8rem;border:1px solid rgba(16,47,32,.3);background:#fff;color:#102f20;font:inherit}
+.account-return-form button,.admin-return-actions button{min-height:44px;padding:.7rem 1rem;border:1px solid #102f20;background:#102f20;color:#f2f0e9;font:inherit;cursor:pointer}
+.account-return-disclaimer{font-size:13px;line-height:1.6;color:#647465}
+.account-return-history article{display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:1rem 0;border-top:1px solid rgba(16,47,32,.15)}
+.account-return-history article p,.account-return-history article small{font-size:13px;margin:.25rem 0;color:#647465}
+.admin-returns-list{display:grid;gap:1rem;margin:2rem 0}
+.admin-return-card{padding:clamp(1rem,3vw,1.5rem);background:#f2f0e9;color:#102f20;border:1px solid rgba(16,47,32,.18)}
+.admin-return-header{display:flex;justify-content:space-between;gap:1rem;align-items:flex-start}
+.admin-return-header p,.admin-return-header small{font-size:13px;color:#647465;margin:.3rem 0}
+.admin-return-details{margin:1rem 0;padding:1rem 0;border-top:1px solid rgba(16,47,32,.15);border-bottom:1px solid rgba(16,47,32,.15);font-size:14px}
+.admin-return-details ul{padding-left:1.2rem;line-height:1.7}
+.admin-return-note{max-width:700px}
+.admin-return-actions{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;margin-top:1rem}
+.admin-return-actions button.secondary{background:transparent;color:#102f20}
+.admin-return-actions small{font-size:13px;color:#647465}
+@media(max-width:560px){.admin-return-header,.account-return-history article{flex-direction:column;align-items:flex-start}}

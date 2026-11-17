@@ -1,8 +1,15 @@
+import "../../reviews-wishlist.css";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getActiveProductBySlug } from "@/lib/catalog";
 import { ProductDetailInteractive } from "@/components/product-detail-interactive";
+import { WishlistButton } from "@/components/wishlist-button";
+import { ProductReviewSection } from "@/components/product-review-section";
+import { BackInStockForm } from "@/components/back-in-stock-form";
+import { formatINR } from "@/lib/money";
+import { getCurrentUser } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -28,6 +35,13 @@ export default async function ProductPage({ params }: Props) {
   const product = await getActiveProductBySlug(slug);
   if (!product) notFound();
 
+  const user=await getCurrentUser();
+  const [reviews,reviewSummary,eligiblePurchase,relatedProducts]=await Promise.all([
+    prisma.review.findMany({where:{productId:product.id,status:"APPROVED"},include:{user:{select:{name:true}}},orderBy:{createdAt:"desc"},take:50}),
+    prisma.review.aggregate({where:{productId:product.id,status:"APPROVED"},_avg:{rating:true},_count:{_all:true}}),
+    user?prisma.orderItem.findFirst({where:{productId:product.id,order:{userId:user.id,status:"DELIVERED",payment:{is:{status:"CAPTURED"}}}},select:{id:true}}):Promise.resolve(null),
+    prisma.product.findMany({where:{id:{not:product.id},isActive:true,...(product.categoryId?{categoryId:product.categoryId}:{})},include:{images:{where:{variantId:null},orderBy:[{isPrimary:"desc"},{position:"asc"}],take:1},category:true},orderBy:{createdAt:"desc"},take:4}),
+  ]);
   const dynamicSpecs = product.attributeValues.map(entry => {
     const value = entry.value;
     const formatted = Array.isArray(value) ? value.join(", ") : typeof value === "boolean" ? (value ? "Yes" : "No") : typeof value === "object" && value !== null ? JSON.stringify(value) : String(value);
@@ -50,6 +64,8 @@ export default async function ProductPage({ params }: Props) {
     >
       <p className="eyebrow">{product.category?.name ?? "YOI KIJI COLLECTION"}</p>
       <h1>{product.name}</h1>
+      <WishlistButton productId={product.id}/>
+      {(product.hasVariants?product.variants.every(v=>v.inventoryQty<=0):product.inventoryQty<=0)&&<BackInStockForm productId={product.id}/>}
       <p className="product-description">{product.description}</p>
       {(product.material || product.color || product.careInstructions || product.lengthMm || product.widthMm || product.heightMm || dynamicSpecs.length > 0) && <dl className="product-specs">
         {product.material && <div><dt>Material</dt><dd>{product.material}</dd></div>}
@@ -59,5 +75,14 @@ export default async function ProductPage({ params }: Props) {
         {dynamicSpecs.map(spec => <div key={spec.name}><dt>{spec.name}</dt><dd>{spec.value}</dd></div>)}
       </dl>}
     </ProductDetailInteractive>
+    <ProductReviewSection
+      slug={product.slug}
+      reviews={reviews.map(review=>({id:review.id,rating:review.rating,title:review.title,body:review.body,verifiedPurchase:review.verifiedPurchase,createdAt:review.createdAt.toISOString(),userName:review.user.name??"YOI KIJI customer"}))}
+      averageRating={reviewSummary._avg.rating??0}
+      reviewCount={reviewSummary._count._all}
+      canReview={!!eligiblePurchase}
+      isSignedIn={!!user}
+    />
+    {relatedProducts.length>0&&<section className="related-products"><div className="related-products__heading"><p className="eyebrow">CONSIDER THESE TOO</p><h2>Made to <em>belong together.</em></h2></div><div className="product-grid">{relatedProducts.map(item=><Link className="product-card" href={"/products/"+item.slug} key={item.id}><div className="product-card-image">{item.images[0]?<img src={item.images[0].url} alt={item.images[0].alt}/>:<span>YOI KIJI</span>}</div><p className="product-card-category">{item.category?.name??"YOI KIJI"}</p><h3>{item.name}</h3><p className="product-card-price">{formatINR(item.pricePaise)}</p></Link>)}</div></section>}
   </main>;
 }

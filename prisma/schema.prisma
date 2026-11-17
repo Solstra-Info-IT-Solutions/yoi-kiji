@@ -50,6 +50,20 @@ enum FulfillmentProvider {
   MANUAL
 }
 
+enum StockAlertStatus {
+  PENDING
+  SENDING
+  SENT
+  FAILED
+  CANCELLED
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum CouponDiscountType {
   PERCENTAGE
   FIXED_AMOUNT
@@ -76,6 +90,8 @@ model User {
   addresses    Address[]
   orders       Order[]
   couponRedemptions CouponRedemption[]
+  reviews Review[]
+  wishlistItems WishlistItem[]
 }
 
 model Address {
@@ -153,6 +169,9 @@ model Product {
   orderItems      OrderItem[]
   inventoryMovements InventoryMovement[]
   collectionLinks StoreCollectionProduct[]
+  reviews Review[]
+  wishlistItems WishlistItem[]
+  stockAlerts StockAlert[]
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   @@index([categoryId, isActive])
@@ -429,4 +448,51 @@ model CouponRedemption {
   createdAt    DateTime @default(now())
   @@unique([couponId, orderId])
   @@index([userId, createdAt])
+}
+
+
+model Review {
+  id              String       @id @default(cuid())
+  productId       String
+  userId          String
+  rating          Int
+  title           String?
+  body            String        @db.Text
+  status          ReviewStatus  @default(PENDING)
+  verifiedPurchase Boolean      @default(false)
+  adminNote       String?       @db.Text
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  product         Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([productId, userId])
+  @@index([productId, status, createdAt])
+  @@index([status, createdAt])
+}
+
+model WishlistItem {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  @@unique([userId, productId])
+  @@index([userId, createdAt])
+}
+
+
+model StockAlert {
+  id          String           @id @default(cuid())
+  productId   String
+  email       String
+  status      StockAlertStatus @default(PENDING)
+  providerId  String?
+  error       String?          @db.Text
+  createdAt   DateTime         @default(now())
+  sentAt      DateTime?
+  product     Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
+  @@unique([productId, email])
+  @@index([status, createdAt])
+  @@index([productId, status])
 }

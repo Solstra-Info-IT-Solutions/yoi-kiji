@@ -81,7 +81,7 @@ export async function POST(request:NextRequest){
      await tx.inventoryMovement.create({data:{productId:line.product.id,variantId:line.variant?.id,quantityDelta:-line.quantity,reason:"ORDER_RESERVATION",reference:orderNumber,createdBy:customerId}});
     }
     const existingAddress=await tx.address.findFirst({where:{userId:customerId,line1:parsed.data.shippingAddress.line1,postalCode:parsed.data.shippingAddress.postalCode,phone:parsed.data.shippingAddress.phone}});
-    if(!existingAddress)await tx.address.create({data:{userId:user.id,...parsed.data.shippingAddress,isDefault:!(await tx.address.count({where:{userId:customerId}}))}});
+    if(!existingAddress)await tx.address.create({data:{userId:customerId,...parsed.data.shippingAddress,isDefault:!(await tx.address.count({where:{userId:customerId}}))}});
     const createdOrder=await tx.order.create({data:{
      orderNumber,checkoutKey:parsed.data.checkoutKey,couponCode:appliedCoupon?.code??null,discountPaise,reservationExpiresAt:new Date(Date.now()+30*60*1000),userId:customerId,status:"PENDING",subtotalPaise,taxPaise,shippingPaise,totalPaise,
      shippingAddress:parsed.data.shippingAddress,billingAddress:parsed.data.shippingAddress,

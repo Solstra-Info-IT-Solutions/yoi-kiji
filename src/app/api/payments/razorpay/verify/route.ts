@@ -35,7 +35,8 @@ export async function POST(request:NextRequest){
  const transition=await prisma.$transaction(async tx=>{
   const claimed=await tx.order.updateMany({where:{id:payment.orderId,status:"PENDING"},data:{status:"CONFIRMED"}});
   if(claimed.count!==1){
-   const current=await tx.order.findUnique({where:{id:payment.orderId},select:{status:true}});
+   const current=await tx.order.findUnique({where:{id:payment.orderId},select:{status:true,payment:{select:{status:true}}}});
+   if(current?.status==="CONFIRMED"&&current.payment?.status==="CAPTURED")return "CONFIRMED";
    return current?.status??"MISSING";
   }
   await tx.payment.update({where:{id:payment.id},data:{status:"CAPTURED",providerPaymentId:parsed.data.razorpay_payment_id}});

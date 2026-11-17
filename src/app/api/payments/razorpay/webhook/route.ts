@@ -20,15 +20,25 @@ export async function POST(request:NextRequest){
   }
   return NextResponse.json({received:true});
  }
- const gatewayOrderId=event?.payload?.payment?.entity?.order_id??event?.payload?.order?.entity?.id;const paymentId=event?.payload?.payment?.entity?.id;
+ const providerPayment=event?.payload?.payment?.entity;
+ const gatewayOrderId=providerPayment?.order_id??event?.payload?.order?.entity?.id;
+ const paymentId=providerPayment?.id;
  if(!gatewayOrderId)return NextResponse.json({received:true});
  const payment=await prisma.payment.findUnique({where:{providerOrderId:gatewayOrderId},include:{order:{include:{items:true}}}});
  if(!payment)return NextResponse.json({received:true});
+ // A valid webhook signature authenticates the payload, but it does not replace
+ // checking that the payment belongs to this exact order and matches its amount.
+ if(providerPayment&&(
+  providerPayment.order_id!==payment.providerOrderId||
+  providerPayment.amount!==payment.amountPaise||
+  providerPayment.currency!==payment.currency
+ ))return NextResponse.json({error:"Payment amount, currency or order reference does not match."},{status:400});
  if((eventId&&payment.webhookEventId===eventId)||payment.status==="CAPTURED"||payment.status==="REFUNDED")return NextResponse.json({received:true,duplicate:true});
  if(event.event==="payment.captured"||event.event==="order.paid"){
+  if(!paymentId||providerPayment?.status!=="captured")return NextResponse.json({error:"Razorpay has not confirmed a captured payment."},{status:400});
   if(payment.order.status==="CANCELLED"){
    const keyId=process.env.RAZORPAY_KEY_ID,apiSecret=process.env.RAZORPAY_KEY_SECRET;
-   if(!keyId||!apiSecret||!paymentId)return NextResponse.json({error:"Late payment requires manual refund."},{status:503});
+   if(!keyId||!apiSecret)return NextResponse.json({error:"Late payment requires manual refund."},{status:503});
    const auth=Buffer.from(keyId+":"+apiSecret).toString("base64");
    const refundResponse=await fetch("https://api.razorpay.com/v1/payments/"+paymentId+"/refund",{method:"POST",headers:{Authorization:"Basic "+auth,"Content-Type":"application/json"},body:JSON.stringify({amount:payment.amountPaise,receipt:"late-"+payment.order.orderNumber}),cache:"no-store"});
    if(!refundResponse.ok)return NextResponse.json({error:"Automatic refund of a late payment failed; reconciliation required."},{status:503});
@@ -43,19 +53,17 @@ export async function POST(request:NextRequest){
      if(current?.status==="CONFIRMED"&&current.payment?.status==="CAPTURED")return "CONFIRMED";
      return "UNCHANGED";
     }
-    await tx.payment.update({where:{id:payment.id},data:{status:"CAPTURED",providerPaymentId:paymentId??undefined,webhookEventId:eventId??undefined}});
+    await tx.payment.update({where:{id:payment.id},data:{status:"CAPTURED",providerPaymentId:paymentId,webhookEventId:eventId??undefined}});
     return "CONFIRMED";
    });
-   // Ask Razorpay to retry when expiry won the race. The retry enters the
-   // cancelled-order branch above and performs the late-payment refund.
    if(transition==="CANCELLED")return NextResponse.json({error:"Order expired during payment confirmation; retry required for refund reconciliation."},{status:503});
    if(transition==="UNCHANGED")return NextResponse.json({error:"Order state changed during payment confirmation; reconciliation required."},{status:503});
    await Promise.allSettled([sendOrderConfirmation(payment.orderId),sendWhatsAppOrderConfirmation(payment.orderId)]);
   }
  }else if(event.event==="payment.failed"){
+  if(providerPayment?.status!=="failed")return NextResponse.json({error:"Razorpay has not confirmed a failed payment."},{status:400});
   // A failed attempt does not release reserved stock: the same Razorpay order may be retried.
   await prisma.payment.update({where:{id:payment.id},data:{status:"FAILED",providerPaymentId:paymentId??undefined,webhookEventId:eventId??undefined}});
-
  }
  return NextResponse.json({received:true});
 }

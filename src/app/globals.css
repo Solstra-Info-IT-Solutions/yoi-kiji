@@ -354,3 +354,34 @@ footer{font-size:14px}
  .footer-bottom{font-size:9px}
 }
 @media(prefers-reduced-motion:reduce){.editorial-hero__image{animation:none;transform:none}.editorial-collection__photo{transition:none}}
+
+
+/* Consistent reading scale for every commerce and account screen */
+.commerce-page :is(p,li,label,input,select,textarea,button,td,th,small),
+.editorial-page :is(p,li,label,input,select,textarea,button,td,th,small),
+.account-page :is(p,li,label,input,select,textarea,button,td,th,small){
+  font-size:max(14px,1em);
+}
+.commerce-page :is(input,select,textarea),.editorial-page :is(input,select,textarea){
+  min-height:46px;font-size:15px;padding:11px 13px;
+}
+.commerce-page :is(button,.primary-link),.editorial-page :is(button,.primary-link){
+  min-height:46px;font-size:14px;
+}
+.commerce-page :is(h1,h2,h3),.editorial-page :is(h1,h2,h3){
+  line-height:1.16;
+}
+.commerce-page :is(.admin-product-list,.admin-order-list,.admin-stats) :is(p,span,small,time){
+  font-size:13px;
+}
+.commerce-page :is(.admin-product-list,.admin-order-list,.admin-stats) strong{
+  font-size:15px;
+}
+:where(a,button,input,select,textarea,[tabindex]):focus-visible{
+  outline:3px solid #c7a77a;outline-offset:3px;
+}
+@media(max-width:600px){
+  .commerce-page,.editorial-page{padding-left:6%;padding-right:6%}
+  .commerce-page :is(p,li,label,input,select,textarea,button,td,th,small){font-size:14px}
+  .commerce-page :is(input,select,textarea){min-height:48px}
+}

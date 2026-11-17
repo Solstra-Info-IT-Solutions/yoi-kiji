@@ -1,0 +1,22 @@
+"use client";
+import { useState } from "react";
+import { formatINR } from "@/lib/money";
+type ReturnRow={id:string;requestNumber:string;orderId:string;status:string;reason:string;note:string|null;adminNote:string|null;refundAmountPaise:number;createdAt:string;user:{name:string|null;email:string};order:{id:string;orderNumber:string;status:string;totalPaise:number;items:{productName:string;sku:string;quantity:number;unitPricePaise:number}[];payment:{status:string;refundStatus:string|null}|null}};
+export function AdminReturnsManager({initialReturns}:{initialReturns:ReturnRow[]}){
+ const [items,setItems]=useState(initialReturns),[notes,setNotes]=useState<Record<string,string>>({}),[busy,setBusy]=useState<string|null>(null),[message,setMessage]=useState("");
+ async function update(id:string,status:string){setBusy(id);setMessage("");try{const response=await fetch("/api/admin/returns",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id,status,adminNote:notes[id]||undefined})});const data=await response.json();if(!response.ok)throw new Error(data.error??"Could not update return.");setItems(old=>old.map(item=>item.id===id?{...item,...data.returnRequest}:item));setMessage("Return "+status.toLowerCase().replaceAll("_"," ")+".");}catch(e){setMessage(e instanceof Error?e.message:"Could not update return.");}finally{setBusy(null);}}
+ async function refund(item:ReturnRow){setBusy(item.id);setMessage("");try{const response=await fetch("/api/admin/orders/"+item.orderId+"/refund",{method:"POST"});const data=await response.json();if(!response.ok)throw new Error(data.error??"Razorpay refund could not be initiated.");const next=await fetch("/api/admin/returns",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:item.id,status:"REFUND_PENDING"})});const nextData=await next.json();if(!next.ok)throw new Error(nextData.error??"Refund initiated but return status could not be updated.");setItems(old=>old.map(x=>x.id===item.id?{...x,...nextData.returnRequest}:x));if(data.processed){await update(item.id,"REFUNDED");}else setMessage("Full refund submitted to Razorpay. The return will complete after its webhook confirmation.");}catch(e){setMessage(e instanceof Error?e.message:"Refund could not be initiated.");}finally{setBusy(null);}}
+ return <section className="admin-returns-list">{items.map(item=><article className="admin-return-card" key={item.id}>
+  <div className="admin-return-header"><div><p className="order-number">{item.requestNumber}</p><strong>{item.order.orderNumber}</strong><p>{item.user.name??item.user.email} · {item.user.email}</p><small>{new Intl.DateTimeFormat("en-IN",{dateStyle:"medium",timeStyle:"short"}).format(new Date(item.createdAt))}</small></div><span className="order-status">{item.status.toLowerCase().replaceAll("_"," ")}</span></div>
+  <div className="admin-return-details"><p><strong>Reason:</strong> {item.reason.replaceAll("_"," ").toLowerCase()}</p>{item.note&&<p><strong>Customer note:</strong> {item.note}</p>}<p><strong>Requested full-order refund:</strong> {formatINR(item.refundAmountPaise)}</p><ul>{item.order.items.map((line,i)=><li key={line.sku+"-"+i}>{line.productName} · {line.sku} × {line.quantity}</li>)}</ul></div>
+  <label className="admin-return-note">Internal note<textarea rows={2} value={notes[item.id]??item.adminNote??""} onChange={e=>setNotes(old=>({...old,[item.id]:e.target.value}))} placeholder="Record inspection or customer service notes"/></label>
+  <div className="admin-return-actions">
+   {item.status==="REQUESTED"&&<><button disabled={busy===item.id} onClick={()=>update(item.id,"APPROVED")}>Approve return</button><button className="secondary" disabled={busy===item.id} onClick={()=>update(item.id,"REJECTED")}>Reject request</button></>}
+   {item.status==="APPROVED"&&<button disabled={busy===item.id} onClick={()=>update(item.id,"RECEIVED")}>Mark goods received</button>}
+   {item.status==="RECEIVED"&&<button disabled={busy===item.id} onClick={()=>refund(item)}>Initiate full Razorpay refund</button>}
+   {item.status==="REFUND_PENDING"&&<small>Waiting for Razorpay refund webhook confirmation.</small>}
+   {item.status==="REFUNDED"&&<small>Full refund confirmed.</small>}
+   {item.status==="REJECTED"&&<small>Request rejected.</small>}
+  </div>
+ </article>)}{items.length===0&&<p>No return requests have been submitted.</p>}{message&&<p className="admin-feedback" role="status">{message}</p>}</section>;
+}

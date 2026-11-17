@@ -1,5 +1,5 @@
-import Link from "next/link";
 "use client";
+import Link from "next/link";
 import { useMemo,useState } from "react";
 type Customer={id:string;name:string|null;email:string;whatsappOptIn:boolean;createdAt:string;orderCount:number;ltvPaise:number;lastPurchaseAt:string|null};
 const money=(paise:number)=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(paise/100);

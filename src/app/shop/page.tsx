@@ -10,7 +10,25 @@ type Filters={collection?:string;category?:string;q?:string;sort?:string;minPric
 export default async function ShopPage({searchParams}:{searchParams:Promise<Filters>}){
  const params=await searchParams;
  const [allProducts,categories]=await Promise.all([getActiveProducts(params.category),getActiveCategories()]);
- const selected=params.collection?await prisma.storeCollection.findUnique({where:{slug:params.collection,isActive:true},include:{products:{orderBy:{sortOrder:"asc"},include:{product:{include:{images:{where:{variantId:null},orderBy:{isPrimary:"desc"},take:1},category:true,categoryLinks:{include:{category:true}}}}}}}):null;
+ const selected=params.collection
+  ? await prisma.storeCollection.findFirst({
+      where:{slug:params.collection,isActive:true},
+      include:{
+       products:{
+        orderBy:{sortOrder:"asc"},
+        include:{
+         product:{
+          include:{
+           images:{where:{variantId:null},orderBy:{isPrimary:"desc"},take:1},
+           category:true,
+           categoryLinks:{include:{category:true}}
+          }
+         }
+        }
+       }
+      }
+     })
+  : null;
  let products=selected?selected.products.map(link=>link.product).filter(product=>product.isActive):allProducts;
  if(selected&&params.category){const category=await prisma.category.findUnique({where:{slug:params.category},select:{id:true,isActive:true}});const ids=category?.isActive?await getCategoryBranchIds(category.id):[];products=products.filter(product=>(product.categoryId!==null&&ids.includes(product.categoryId))||product.categoryLinks.some(link=>ids.includes(link.categoryId)));}
  const query=params.q?.trim().toLowerCase();

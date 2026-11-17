@@ -385,22 +385,3 @@ footer{font-size:14px}
   .commerce-page :is(p,li,label,input,select,textarea,button,td,th,small){font-size:14px}
   .commerce-page :is(input,select,textarea){min-height:48px}
 }
-
-
-/* Inventory controls and order operations */
-.inventory-adjustment{margin:2rem 0}
-.admin-inventory-snapshot,.admin-inventory-ledger{margin:2.5rem 0}
-.admin-inventory-snapshot .admin-section-heading,.admin-inventory-ledger .admin-section-heading{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;flex-wrap:wrap;margin-bottom:1rem}
-.admin-inventory-snapshot .admin-section-heading h2,.admin-inventory-ledger .admin-section-heading h2{font-family:var(--serif);font-size:clamp(30px,4vw,42px);font-weight:400;margin:0}
-.admin-order-workbench{margin:2rem 0}
-.admin-order-filters{display:grid;grid-template-columns:minmax(200px,1.4fr) repeat(2,minmax(160px,.8fr)) auto;gap:1rem;align-items:end;padding:1.25rem;margin:1.5rem 0;background:#f2f0e9;color:#102f20}
-.admin-order-filters label{display:grid;gap:.4rem;font-size:13px;font-weight:600}
-.admin-order-filters input,.admin-order-filters select{width:100%;min-width:0;min-height:46px;padding:.7rem;border:1px solid rgba(16,47,32,.3);background:#fff;color:#102f20;font:inherit;font-size:14px}
-.admin-order-filters .primary-link{min-height:46px;display:flex;align-items:center;justify-content:center;padding:.6rem .9rem;white-space:nowrap}
-.admin-order-workbench>.admin-section-heading{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;margin:1.5rem 0}
-.admin-order-workbench>.admin-section-heading h2{font-family:var(--serif);font-size:clamp(30px,4vw,42px);font-weight:400;margin:0}
-.admin-order-workbench>.admin-section-heading span{font-size:13px;color:#aab8a8}
-.admin-order-workbench .orders-list{display:grid;gap:.7rem}
-.admin-order-workbench .order-card{display:grid;grid-template-columns:1.1fr .65fr 1fr;gap:1rem;align-items:center}
-@media(max-width:850px){.admin-order-filters{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-order-workbench .order-card{grid-template-columns:1fr 1fr}.admin-order-workbench .order-card>div:last-child{grid-column:1/-1}}
-@media(max-width:560px){.admin-order-filters{grid-template-columns:1fr}.admin-order-workbench .order-card{grid-template-columns:1fr}.admin-order-workbench .order-card>div:last-child{grid-column:auto}}

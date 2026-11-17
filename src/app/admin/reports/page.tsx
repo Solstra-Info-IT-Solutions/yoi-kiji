@@ -1,3 +1,4 @@
+import "../../admin-insights.css";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/admin";

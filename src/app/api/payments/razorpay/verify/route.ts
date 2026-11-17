@@ -32,10 +32,18 @@ export async function POST(request:NextRequest){
   await prisma.$transaction([prisma.payment.update({where:{id:payment.id},data:{status:processed?"REFUNDED":"CAPTURED",providerPaymentId:parsed.data.razorpay_payment_id,refundId:refund.id,refundStatus:refund.status,refundAmountPaise:refund.amount}}),...(processed?[prisma.order.update({where:{id:payment.orderId},data:{status:"REFUNDED"}})]:[])]);
   return NextResponse.json({verified:true,refunded:processed,refundStatus:refund.status,orderNumber:payment.order.orderNumber});
  }
- await prisma.$transaction([
-  prisma.payment.update({where:{id:payment.id},data:{status:"CAPTURED",providerPaymentId:parsed.data.razorpay_payment_id}}),
-  prisma.order.update({where:{id:payment.orderId},data:{status:"CONFIRMED"}})
- ]);
+ const transition=await prisma.$transaction(async tx=>{
+  const claimed=await tx.order.updateMany({where:{id:payment.orderId,status:"PENDING"},data:{status:"CONFIRMED"}});
+  if(claimed.count!==1){
+   const current=await tx.order.findUnique({where:{id:payment.orderId},select:{status:true}});
+   return current?.status??"MISSING";
+  }
+  await tx.payment.update({where:{id:payment.id},data:{status:"CAPTURED",providerPaymentId:parsed.data.razorpay_payment_id}});
+  return "CONFIRMED";
+ });
+ // A retry will enter the cancelled-order refund path above if expiry won.
+ if(transition==="CANCELLED")return NextResponse.json({error:"Order expired during payment confirmation; retry required for refund reconciliation."},{status:503});
+ if(transition!=="CONFIRMED")return NextResponse.json({error:"Order state changed during payment confirmation; reconciliation required."},{status:409});
  await Promise.allSettled([sendOrderConfirmation(payment.orderId),sendWhatsAppOrderConfirmation(payment.orderId)]);
  return NextResponse.json({verified:true,orderNumber:payment.order.orderNumber});
 }

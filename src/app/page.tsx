@@ -1,6 +1,8 @@
 import { getActiveCategories } from "@/lib/catalog";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 const fallbackCategories = [
   { number:"01",name:"Bedsheets",note:"A softer beginning and end to every day.",image:"https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=1400&q=90",slug:"bedsheets" },
   { number:"02",name:"Curtains",note:"Light, filtered to feel just right.",image:"https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=1400&q=90",slug:"curtains" },

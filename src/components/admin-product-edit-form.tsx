@@ -14,6 +14,7 @@ type EditableProduct = {
   isActive: boolean; hasVariants: boolean; productTypeId: string | null; categoryId: string | null;
   categoryLinks: { categoryId: string; isPrimary: boolean }[];
   attributeValues: AttributeValue[];
+  seoTitle: string | null; seoDescription: string | null; seoKeywords: string[]; canonicalUrl: string | null; noIndex: boolean;
 };
 
 export function AdminProductEditForm({ product }: { product: EditableProduct }) {
@@ -32,7 +33,7 @@ export function AdminProductEditForm({ product }: { product: EditableProduct }) 
     stock: product.inventoryQty.toString(), productTypeId: product.productTypeId ?? "",
     categoryIds: product.categoryLinks.length ? product.categoryLinks.map(link => link.categoryId) : product.categoryId ? [product.categoryId] : [],
     primaryCategoryId: product.categoryLinks.find(link => link.isPrimary)?.categoryId ?? product.categoryId ?? "",
-    isActive: product.isActive,
+    isActive: product.isActive, seoTitle: product.seoTitle ?? "", seoDescription: product.seoDescription ?? "", seoKeywords: product.seoKeywords.join(", "), canonicalUrl: product.canonicalUrl ?? "", noIndex: product.noIndex,
   });
   const [attributeValues, setAttributeValues] = useState<Record<string, unknown>>(
     Object.fromEntries(product.attributeValues.map(item => [item.attributeId, item.value])),
@@ -98,6 +99,9 @@ export function AdminProductEditForm({ product }: { product: EditableProduct }) 
         inventoryQty: Number(form.stock), productTypeId: form.productTypeId || null,
         categoryIds: form.categoryIds, primaryCategoryId: form.primaryCategoryId,
         isActive: form.isActive, attributes,
+        seoTitle: form.seoTitle || null, seoDescription: form.seoDescription || null,
+        seoKeywords: form.seoKeywords.split(",").map(value => value.trim()).filter(Boolean),
+        canonicalUrl: form.canonicalUrl || null, noIndex: form.noIndex,
       };
       const response = await fetch(`/api/admin/products/${product.id}`, {
         method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
@@ -134,6 +138,7 @@ export function AdminProductEditForm({ product }: { product: EditableProduct }) 
       <label>Product stock<input required type="number" min="0" step="1" value={form.stock} onChange={event => set("stock", event.target.value)} /></label>
       <label className="admin-dynamic-attribute"><span><input type="checkbox" checked={form.isActive} onChange={event => set("isActive", event.target.checked)} /> Published on storefront</span></label>
       {selectedType && selectedType.attributes.length > 0 && <div className="admin-form-wide admin-dynamic-fields"><p className="eyebrow">{selectedType.name.toUpperCase()} SPECIFICATIONS</p><div className="admin-product-form">{selectedType.attributes.filter(link => !link.attribute.isVariantAxis).map(renderAttribute)}</div><small>Variant-axis attributes are managed in the SKU section below.</small></div>}
+      <div className="admin-form-wide admin-seo-fields"><p className="eyebrow">SEARCH ENGINE OPTIMISATION</p><label>SEO title (max 160 characters)<input maxLength={160} value={form.seoTitle} onChange={event => set("seoTitle", event.target.value)} /></label><label>SEO description (max 320 characters)<textarea maxLength={320} rows={3} value={form.seoDescription} onChange={event => set("seoDescription", event.target.value)} /></label><label>SEO keywords (comma separated)<input value={form.seoKeywords} onChange={event => set("seoKeywords", event.target.value)} /></label><label>Canonical URL<input type="url" value={form.canonicalUrl} onChange={event => set("canonicalUrl", event.target.value)} /></label><label className="admin-dynamic-attribute"><span><input type="checkbox" checked={form.noIndex} onChange={event => set("noIndex", event.target.checked)} /> Exclude this product from search indexing</span></label></div>
       <label className="admin-form-wide">Care instructions<textarea value={form.careInstructions} onChange={event => set("careInstructions", event.target.value)} /></label>
       <label className="admin-form-wide">Description<textarea required minLength={10} value={form.description} onChange={event => set("description", event.target.value)} /></label>
       {message && <p className="admin-form-wide" role="status">{message}</p>}

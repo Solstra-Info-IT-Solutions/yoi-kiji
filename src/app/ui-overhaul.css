@@ -37,7 +37,7 @@ a,button{ -webkit-tap-highlight-color:transparent}
 .editorial-intro__grid>div{max-width:460px}
 .editorial-intro__grid>div p{font-size:clamp(14px,1.1vw,16px);line-height:1.95}
 .editorial-collections{padding:clamp(74px,9vw,128px) var(--yk-gutter)}
-.editorial-section-heading{align-items:end;gap:28px;margin-bottom:clamp(30px,4vw,58px)}
+.editorial-section-heading{align-items:flex-end;gap:28px;margin-bottom:clamp(30px,4vw,58px)}
 .editorial-collection-grid{gap:clamp(12px,1.5vw,22px)}
 .editorial-collection{min-height:clamp(340px,45vw,620px);border-radius:3px;overflow:hidden;isolation:isolate}
 .editorial-collection__photo{transition:transform 1.2s var(--yk-ease),filter 1s}

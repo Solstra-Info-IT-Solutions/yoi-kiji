@@ -119,3 +119,7 @@ input,select,textarea{font:inherit;border-radius:4px}
 @media(prefers-reduced-motion:reduce){
  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}
 }
+
+[data-motion-reveal="pending"]{opacity:0;transform:translate3d(0,28px,0);transition:opacity .85s var(--yk-ease) var(--motion-delay,0ms),transform .95s var(--yk-ease) var(--motion-delay,0ms)}
+[data-motion-reveal="visible"]{opacity:1;transform:translate3d(0,0,0)}
+@media(prefers-reduced-motion:reduce){[data-motion-reveal="pending"],[data-motion-reveal="visible"]{opacity:1;transform:none;transition:none}}

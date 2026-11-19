@@ -1,8 +1,8 @@
 /* YOI KIJI — premium experience system */
 :root{
   --yk-ink:#102b18;--yk-forest:#0e300e;--yk-moss:#526c4d;--yk-paper:#f2f0e9;--yk-soft:#e7e6dd;--yk-gold:#c9a878;
-  --yk-display:'Playfair Display',Georgia,serif;--yk-body:'DM Sans',Arial,sans-serif;
-  --yk-gutter:clamp(22px,6vw,104px);--yk-radius:4px;--yk-ease:cubic-bezier(.22,1,.36,1);--yk-spring:cubic-bezier(.2,1.35,.35,1);
+  --yk-display:'Montserrat',Arial,sans-serif;--yk-body:'Montserrat',Arial,sans-serif;
+  --yk-gutter:clamp(22px,6vw,104px);--yk-radius:12px;--yk-ease:cubic-bezier(.22,1,.36,1);--yk-spring:cubic-bezier(.2,1.35,.35,1);
 }
 html{scroll-behavior:smooth;scroll-padding-top:112px}
 body{font-family:var(--yk-body);font-size:14px;line-height:1.65;letter-spacing:.005em}
@@ -28,7 +28,7 @@ a,button{ -webkit-tap-highlight-color:transparent}
 .editorial-hero h1{font-size:clamp(76px,11vw,156px);line-height:.91;letter-spacing:-.065em;max-width:900px}
 .editorial-hero__description{font-size:clamp(14px,1.2vw,17px);max-width:390px;line-height:1.9}
 .editorial-eyebrow{font-size:10px;letter-spacing:.19em}
-.editorial-cta,.primary-link,.light-link,.editorial-cta--light,button,.button{border-radius:4px!important;min-height:52px;padding:15px 22px;letter-spacing:.045em;transition:transform .5s var(--yk-spring),background .35s,color .35s,border-color .35s,box-shadow .35s}
+.editorial-cta,.primary-link,.light-link,.editorial-cta--light,button,.button{border-radius:12px!important;min-height:52px;padding:15px 22px;letter-spacing:.045em;transition:transform .5s var(--yk-spring),background .35s,color .35s,border-color .35s,box-shadow .35s}
 .editorial-cta:hover,.primary-link:hover,.light-link:hover,.editorial-cta--light:hover,.button:hover{transform:translateY(-3px);box-shadow:0 14px 30px #071b0c24}
 .editorial-cta:active,.primary-link:active,.light-link:active,.button:active{transform:translateY(0) scale(.98)}
 .editorial-intro{padding:clamp(82px,10vw,150px) var(--yk-gutter)}
@@ -62,8 +62,9 @@ a,button{ -webkit-tap-highlight-color:transparent}
 .editorial-hero__topline,.editorial-hero__bottom{justify-content:space-between}
 .editorial-collection__copy span{max-width:260px;line-height:1.7}
 .commerce-page{padding:clamp(28px,4vw,54px) var(--yk-gutter) clamp(80px,9vw,130px)}
+:where(button,.button,.primary-link,.light-link,.editorial-cta,.editorial-cta--light,.yk-launcher__enter){border-radius:12px}
 .commerce-breadcrumb{font-size:11px;gap:14px;margin-bottom:26px}
-input,select,textarea{font:inherit;border-radius:4px}
+input,select,textarea{font:inherit;border-radius:8px}
 @keyframes yk-hero-settle{from{transform:scale(1.11);filter:blur(5px)}to{transform:scale(1.025);filter:blur(0)}}
 @keyframes yk-rise{from{opacity:0;transform:translate3d(0,34px,0)}to{opacity:1;transform:translate3d(0,0,0)}}
 @media (prefers-reduced-motion:no-preference){

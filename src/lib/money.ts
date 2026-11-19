@@ -9,11 +9,14 @@ export function assertMinorUnits(value: number): number {
 
 export function formatINR(paise: number): string {
   assertMinorUnits(paise);
-  return new Intl.NumberFormat("en-IN", {
+  const rupees = Math.floor(paise / 100);
+  const remainder = paise % 100;
+  const formattedRupees = new Intl.NumberFormat("en-IN", {
     style: "currency",
     currency: "INR",
-    maximumFractionDigits: 2,
-  }).format(paise / 100);
+    maximumFractionDigits: 0,
+  }).format(rupees);
+  return `${formattedRupees}.${String(remainder).padStart(2, "0")}`;
 }
 
 export function calculateTaxInclusive(amountPaise: number, rateBps: number): number {
@@ -21,5 +24,9 @@ export function calculateTaxInclusive(amountPaise: number, rateBps: number): num
   if (!Number.isInteger(rateBps) || rateBps < 0 || rateBps > 10000) {
     throw new RangeError("Tax rate must be an integer between 0 and 10000 basis points.");
   }
-  return Math.round((amountPaise * rateBps) / (10000 + rateBps));
+
+  // BigInt avoids precision loss when multiplying large, otherwise-safe paise values.
+  const numerator = BigInt(amountPaise) * BigInt(rateBps);
+  const denominator = BigInt(10000 + rateBps);
+  return Number((numerator + denominator / 2n) / denominator);
 }

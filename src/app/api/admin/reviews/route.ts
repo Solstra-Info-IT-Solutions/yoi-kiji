@@ -9,10 +9,10 @@ export async function GET(){
 }
 export async function PATCH(request:NextRequest){
  const admin=await requireAdmin();if(!admin||admin.role!=="ADMIN")return NextResponse.json({error:"Administrator permission required."},{status:403});
- const parsed=z.object({id:z.string().min(1),status:z.enum(["APPROVED","REJECTED"]),adminNote:z.string().max(1000).optional()}).safeParse(await request.json().catch(()=>null));
+ const parsed=z.object({id:z.string().min(1),status:z.enum(["APPROVED","REJECTED"]).optional(),adminNote:z.string().max(1000).optional()}).safeParse(await request.json().catch(()=>null));
  if(!parsed.success)return NextResponse.json({error:"Invalid review moderation update."},{status:400});
  const current=await prisma.review.findUnique({where:{id:parsed.data.id}});
  if(!current)return NextResponse.json({error:"Review not found."},{status:404});
- const review=await prisma.review.update({where:{id:current.id},data:{status:parsed.data.status,adminNote:parsed.data.adminNote??null}});
+ const review=await prisma.review.update({where:{id:current.id},data:{...(parsed.data.status?{status:parsed.data.status}:{}),...(parsed.data.adminNote!==undefined?{adminNote:parsed.data.adminNote||null}:{})}});
  return NextResponse.json({review});
 }

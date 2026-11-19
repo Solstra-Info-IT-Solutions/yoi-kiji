@@ -3,6 +3,7 @@ import "./globals.css";
 import "./ui-overhaul.css";
 import "./admin-operations.css";
 import "./journal.css";
+import "./visual-stability.css";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { Analytics } from "@/components/analytics";

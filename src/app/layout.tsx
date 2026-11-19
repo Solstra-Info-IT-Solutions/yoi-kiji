@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./ui-overhaul.css";
 import "./admin-operations.css";
 import "./journal.css";
 import { SiteHeader } from "@/components/site-header";

@@ -20,7 +20,7 @@ h1, h2, h3, h4, h5, h6 { text-wrap: balance; }
 p { text-wrap: pretty; }
 :where(button, input, select, textarea) { max-width: 100%; }
 :where(input, select, textarea) { min-height: var(--yk-control-height); color: var(--yk-ui-ink); font-size: 15px; line-height: 1.45; }
-:where(button, .button, .primary-link, .light-link, .editorial-cta, .editorial-cta--light, .auth-submit, .checkout-submit) {
+button, .button, .primary-link, .light-link, .editorial-cta, .editorial-cta--light, .auth-submit, .checkout-submit {
   display: inline-flex; align-items: center; justify-content: center;
   min-height: var(--yk-control-height); height: var(--yk-control-height);
   padding: 0 20px; gap: 10px; border-radius: 6px;

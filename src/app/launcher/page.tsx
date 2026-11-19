@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef } from "react";
+import "./launcher.css";
 
 export default function LauncherPage() {
   const stage = useRef<HTMLDivElement>(null);

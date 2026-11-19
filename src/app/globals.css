@@ -567,3 +567,14 @@ footer{font-size:14px}
  .cart-line{grid-template-columns:88px minmax(0,1fr)}
  .cart-thumb{height:116px}
 }
+
+
+/* Shop filter form layout: grid declarations need an explicit grid container. */
+.shop-filter-form{display:grid;align-items:end}
+.shop-filter-form label{display:grid;min-width:0;font-size:14px;line-height:1.45}
+.shop-filter-form input,.shop-filter-form select{width:100%;min-width:0;font-size:15px}
+.shop-filter-form button{font-size:14px}
+@media(max-width:700px){
+ .shop-filter-form label{font-size:14px}
+ .shop-filter-form button,.shop-filter-form>a{min-height:48px}
+}

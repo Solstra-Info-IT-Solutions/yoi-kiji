@@ -1,0 +1,133 @@
+/* YOI KIJI — site-wide visual stability layer.
+   Loaded after the existing page styles so shared layout rules stay predictable. */
+:root {
+  --yk-ui-font: "Montserrat", Arial, sans-serif;
+  --yk-ui-paper: #f2f0e9;
+  --yk-ui-ink: #102b18;
+  --yk-ui-muted: #647260;
+  --yk-ui-border: #d5ddd1;
+  --yk-ui-gutter: clamp(18px, 5.5vw, 88px);
+}
+html { width: 100%; max-width: 100%; overflow-x: clip; }
+body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+  font-family: var(--yk-ui-font);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+body, button, input, select, textarea { font-family: var(--yk-ui-font); }
+*, *::before, *::after { box-sizing: border-box; }
+img, video, canvas, svg { max-width: 100%; }
+img, video { height: auto; }
+main, section, header, footer, nav, article, aside { min-width: 0; }
+p, li, label, small, summary { overflow-wrap: anywhere; }
+h1, h2, h3, h4, h5, h6 { text-wrap: balance; }
+p { text-wrap: pretty; }
+:where(button, input, select, textarea) { max-width: 100%; }
+:where(input, select, textarea) {
+  min-height: 46px;
+  color: var(--yk-ui-ink);
+  font-size: 15px;
+  line-height: 1.45;
+}
+:where(button, .button, .primary-link, .light-link, .editorial-cta, .editorial-cta--light) {
+  font-family: var(--yk-ui-font);
+  font-size: 14px;
+  line-height: 1.35;
+  font-weight: 600;
+  text-decoration: none;
+}
+:where(button, .button, .primary-link, .light-link, .editorial-cta, .editorial-cta--light):focus-visible {
+  outline: 3px solid #c9a878;
+  outline-offset: 3px;
+}
+/* Keep the brand's one-font rule consistent across legacy and newer routes. */
+:where(h1,h2,h3,h4,h5,h6,p,a,button,input,select,textarea,label,small,strong,em,span,li,td,th) {
+  font-family: var(--yk-ui-font);
+}
+/* Prevent flex/grid children and long labels from forcing page overflow. */
+:where(.site-header, .footer-top, .footer-bottom, .commerce-page, .commerce-heading,
+.product-grid, .product-detail, .product-gallery, .cart-layout, .checkout-panel,
+.account-panel, .auth-panel, .journal-page, .journal-article-page, .admin-content,
+.admin-main, .admin-shell, .dashboard-content) { min-width: 0; }
+.product-grid, .journal-grid, .editorial-collection-grid { align-items: start; }
+.product-card, .journal-card, .editorial-collection { min-width: 0; }
+.product-card-image, .journal-card-image { overflow: hidden; }
+.product-card-image img, .journal-card-image img, .product-gallery img {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  object-fit: cover;
+}
+.product-detail-copy { min-width: 0; }
+.shop-filter-form { width: 100%; max-width: 1280px; margin-inline: auto; }
+.shop-filter-form > * { min-width: 0; }
+.shop-filter-form input, .shop-filter-form select { min-width: 0; width: 100%; }
+.checkout-fields label, .auth-form label { min-width: 0; }
+.checkout-fields input, .auth-form input { width: 100%; min-width: 0; }
+.cart-line-info, .cart-summary { min-width: 0; }
+:where(table) { width: 100%; border-collapse: collapse; }
+:where(.table-wrap, .admin-table-wrap, .data-table-wrap) { max-width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; }
+:where(.admin-card, .admin-panel, .dashboard-card, .settings-card) { min-width: 0; }
+:where(.admin-card, .admin-panel, .dashboard-card) img { max-width: 100%; height: auto; }
+/* Buttons should be clean text-first controls, never depend on decorative arrow glyphs. */
+:where(.primary-link, .light-link, .editorial-cta, .editorial-cta--light, .auth-submit, .checkout-submit) > span {
+  display: none !important;
+}
+:where(button, .primary-link, .light-link, .editorial-cta, .editorial-cta--light) {
+  min-height: 46px;
+}
+.site-header { z-index: 100; }
+.site-header nav a, .header-actions a { line-height: 1.5; }
+.site-footer { width: 100%; }
+@media (max-width: 1100px) {
+  .site-header { grid-template-columns: minmax(0,1fr) auto; }
+  .site-header nav { display: none; }
+}
+@media (max-width: 760px) {
+  :root { --yk-ui-gutter: 20px; }
+  body { font-size: 15px; }
+  .commerce-page, .journal-page, .journal-article-page { padding-inline: 20px; }
+  .commerce-heading { margin-block: 48px 36px; }
+  .commerce-heading h1, .not-found h1 { font-size: clamp(38px, 11vw, 54px); line-height: 1.08; }
+  .product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 12px; }
+  .product-card-image { height: auto; aspect-ratio: 4 / 5; }
+  .product-card h2 { font-size: clamp(14px, 3.5vw, 17px); line-height: 1.35; }
+  .product-card-category { font-size: 10px; line-height: 1.4; }
+  .product-card-price { font-size: 13px; }
+  .product-detail { grid-template-columns: minmax(0,1fr); gap: 18px; }
+  .product-detail-copy { position: static; padding: 12px 0 0; }
+  .product-detail-copy h1 { font-size: clamp(32px, 9vw, 46px); line-height: 1.12; }
+  .product-gallery { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .product-gallery img { aspect-ratio: 4 / 5; }
+  .checkout-fields { grid-template-columns: minmax(0,1fr); }
+  .checkout-fields label.wide { grid-column: auto; }
+  .cart-line { grid-template-columns: 96px minmax(0,1fr); gap: 14px; }
+  .cart-thumb { height: 126px; }
+  .order-card { grid-template-columns: minmax(0,1fr); gap: 10px; }
+  .journal-grid { grid-template-columns: minmax(0,1fr); }
+  .journal-card-featured { grid-column: auto; grid-row: auto; }
+  .journal-card-image, .journal-card-featured .journal-card-image { height: auto; aspect-ratio: 4 / 3; }
+  .journal-article-header h1 { font-size: clamp(36px, 10vw, 52px); line-height: 1.1; }
+  .blog-prose { font-size: 16px; line-height: 1.85; overflow-wrap: anywhere; }
+  .blog-prose img, .blog-prose video, .blog-prose iframe { max-width: 100%; }
+  .footer-bottom { align-items: flex-start; flex-wrap: wrap; gap: 14px; }
+}
+@media (max-width: 390px) {
+  .wordmark-main { font-size: 17px; }
+  .header-actions { gap: 8px; }
+  .product-grid { gap: 24px 10px; }
+  .cart-line { grid-template-columns: 82px minmax(0,1fr); }
+  .cart-thumb { height: 110px; }
+  .commerce-page, .journal-page, .journal-article-page { padding-inline: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
